@@ -328,6 +328,21 @@ No test dependency is required:
 python -m unittest discover -s tests -v
 ```
 
+## Benchmarks
+
+`benchmarks/` contains a first, small slice of the benchmark harness
+described below: 5 synthetic tasks, each compiled under a budget sweep with
+`ours` (this compiler) against two naive baselines (`full`, `random`) plus
+an Oracle reference point.
+
+```bash
+python benchmarks/run.py
+```
+
+See `benchmarks/README.md` for exactly what is and is not being measured —
+it is explicitly a starting point (5 tasks, keyword-check evaluator), not
+the 30-100 task benchmark recommended below.
+
 ## Important MVP limitations
 
 This package intentionally makes the research hypothesis inspectable. It does **not** pretend that the current heuristic scorer solves context sufficiency.
@@ -347,7 +362,10 @@ These are intentional extension points rather than hidden assumptions.
 
 ## Recommended next research iterations
 
-1. **Build a benchmark harness** around 30-100 coding tasks.
+1. **Build a benchmark harness** around 30-100 coding tasks. *Started:*
+   `benchmarks/` has a 5-task version comparing `ours` against `full` and
+   `random` baselines with a keyword-check evaluator — see
+   `benchmarks/README.md` for what it does and does not yet prove.
 2. Compare `Full`, `Random`, `Lexical/FTS`, `Embedding RAG`, `Ours`, and `Oracle` under equal budgets.
 3. Record task success, lifecycle input tokens, context misses and latency.
 4. Estimate `B95`: smallest budget reaching 95% of full-context baseline quality.

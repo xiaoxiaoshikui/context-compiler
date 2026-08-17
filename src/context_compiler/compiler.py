@@ -23,7 +23,13 @@ class CompilerConfig:
     max_candidates: int = 120
     min_candidate_score: float = 0.055
     pinned_min_level: RenderLevel = RenderLevel.L2
-    constraint_min_level: RenderLevel = RenderLevel.L1
+    # L1 only ever renders a fixed lead line/outline regardless of the task, so an
+    # ingested (non-pinned) constraint's forced-minimum guarantee can miss the
+    # actual operative sentence if it isn't the file's first line (e.g. a markdown
+    # doc with "# Title" followed by the real invariant in the next paragraph). L2
+    # runs task-aware extractive summarization instead, which is far more likely to
+    # surface the sentence that actually matters. Found via benchmarks/run.py.
+    constraint_min_level: RenderLevel = RenderLevel.L2
     reserve_tokens: int = 0
     # Penalize tiny low-value pointers so the compiler does not fill the
     # context with a directory listing of everything it knows.
