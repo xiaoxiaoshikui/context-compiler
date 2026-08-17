@@ -25,7 +25,8 @@ dependencies = []
 [project.optional-dependencies]
 mcp = ["mcp>=2,<3"]
 exact = ["tiktoken>=0.7"]
-all = ["mcp>=2,<3", "tiktoken>=0.7"]
+llm_judge = ["anthropic>=0.40"]
+all = ["mcp>=2,<3", "tiktoken>=0.7", "anthropic>=0.40"]
 
 [project.scripts]
 ctxc = "context_compiler.cli:main"

@@ -87,4 +87,86 @@ TASKS: list[BenchTask] = [
         required_substrings=("never commit", "secrets manager"),
         oracle_source="SECRETS_POLICY.md",
     ),
+    # --- config-lookup: the fact is a specific value buried in a config
+    # file, not a policy statement. No constraint doc exists in these
+    # repos, so the compiler's forced-minimum-level safety net for
+    # constraints never kicks in -- these tasks test relevance ranking
+    # on its own.
+    BenchTask(
+        slug="db_pool_timeout",
+        repo=BENCH_ROOT / "repos" / "db_pool_timeout",
+        task="Diagnose why orders-api requests intermittently fail with "
+        "'timed out waiting for a database connection' during peak traffic",
+        required_substrings=("db_pool_size=5",),
+        oracle_source="service.env",
+    ),
+    BenchTask(
+        slug="feature_flag_rollout",
+        repo=BENCH_ROOT / "repos" / "feature_flag_rollout",
+        task="Explain why only some users see the new checkout flow after "
+        "it was marked enabled",
+        required_substrings=("new_checkout_rollout_percent: 10",),
+        oracle_source="flags.yaml",
+    ),
+    BenchTask(
+        slug="rate_config_mismatch",
+        repo=BENCH_ROOT / "repos" / "rate_config_mismatch",
+        task="Investigate why the billing client raises a timeout error "
+        "even though the billing service itself responds within 400ms",
+        required_substrings=("upstream_timeout_ms: 500",),
+        oracle_source="client_config.yaml",
+    ),
+    # --- code-behavior: the fact is in a function's actual default/logic,
+    # not a doc. Also no constraint doc in these repos.
+    BenchTask(
+        slug="cache_ttl",
+        repo=BENCH_ROOT / "repos" / "cache_ttl",
+        task="Explain why cached prices shown to users are sometimes stale "
+        "for up to half a minute after an admin updates a price",
+        required_substrings=("ttl_seconds=30",),
+        oracle_source="cache.py",
+    ),
+    BenchTask(
+        slug="retry_backoff",
+        repo=BENCH_ROOT / "repos" / "retry_backoff",
+        task="Explain why a downstream outage causes this service's "
+        "requests to back off for several seconds before giving up entirely",
+        required_substrings=("max_attempts=5",),
+        oracle_source="backoff.py",
+    ),
+    BenchTask(
+        slug="pagination_limit",
+        repo=BENCH_ROOT / "repos" / "pagination_limit",
+        task="Explain why a customer with 40 orders only sees 25 of them "
+        "in the export tool",
+        required_substrings=("page_size=25",),
+        oracle_source="orders_export.py",
+    ),
+    # --- decision-record: the fact is "why we chose X over Y"; the correct
+    # action is to respect the decision rather than what looks locally
+    # sensible. Also no constraint doc in these repos.
+    BenchTask(
+        slug="queue_delivery_decision",
+        repo=BENCH_ROOT / "repos" / "queue_delivery_decision",
+        task="A teammate wants to switch the order events queue to "
+        "at-most-once delivery to simplify consumer code -- evaluate it",
+        required_substrings=("at-least-once", "idempotent"),
+        oracle_source="DECISIONS.md",
+    ),
+    BenchTask(
+        slug="sync_vs_async_decision",
+        repo=BENCH_ROOT / "repos" / "sync_vs_async_decision",
+        task="Propose moving email sending back into the synchronous "
+        "request handler for lower latency -- evaluate it",
+        required_substrings=("thread pool exhaustion", "asynchronously"),
+        oracle_source="DECISIONS.md",
+    ),
+    BenchTask(
+        slug="soft_delete_decision",
+        repo=BENCH_ROOT / "repos" / "soft_delete_decision",
+        task="Propose switching customer record deletion from soft delete "
+        "to a hard SQL DELETE for simplicity -- evaluate it",
+        required_substrings=("soft delete", "audit trail"),
+        oracle_source="DECISIONS.md",
+    ),
 ]

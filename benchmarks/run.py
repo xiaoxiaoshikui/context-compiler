@@ -8,12 +8,22 @@ not a real coding agent -- see tasks.py and README.md for the caveats.
 
 Usage:
     python benchmarks/run.py
+    python benchmarks/run.py --evaluator llm_judge --yes   # costs real API calls; see below
 
-Writes benchmarks/results/results.json and benchmarks/REPORT.md.
+Writes benchmarks/results/results.json and benchmarks/REPORT.md (keyword
+evaluator only -- llm_judge runs write to results.llm_judge.json and print
+to stdout instead, so they never silently overwrite the keyword baseline).
+
+The default evaluator is the free/instant keyword check. `--evaluator
+llm_judge` swaps in benchmarks/llm_judge_eval.py, a real Anthropic API call
+per (method, budget) -- see benchmarks/README.md for what it does and does
+not prove. It requires `pip install -e '.[llm_judge]'`, a real
+ANTHROPIC_API_KEY, and `--yes` to confirm the cost.
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 import tempfile
@@ -65,21 +75,43 @@ def oracle_tokens(store: ContextStore, task_def: BenchTask, counter: HeuristicTo
     return None
 
 
-def run_task(task_def: BenchTask) -> dict:
+def make_llm_judge_evaluator(task_def: BenchTask):
+    from context_compiler.experiments import JsonCommandEvaluator
+
+    return JsonCommandEvaluator([sys.executable, str(BENCH_ROOT / "llm_judge_eval.py")])
+
+
+EVALUATOR_FACTORIES = {
+    "keyword": make_evaluator,
+    "llm_judge": make_llm_judge_evaluator,
+}
+
+
+def run_task(task_def: BenchTask, *, evaluator_name: str, budgets: list[int]) -> dict:
     store = load_store(task_def.repo)
     counter = HeuristicTokenCounter()
-    evaluate = make_evaluator(task_def)
+    evaluate = EVALUATOR_FACTORIES[evaluator_name](task_def)
 
-    methods = {
-        "ours": (ContextCompiler(store, counter=counter), REPEATS_DETERMINISTIC),
-        "full": (FullContextBaseline(store, counter=counter), REPEATS_DETERMINISTIC),
-        "random": (RandomContextBaseline(store, counter=counter, seed=1234), REPEATS_RANDOM),
-    }
+    # llm_judge is a paid, non-instant call -- one shot per (method, budget),
+    # no repeats. The keyword evaluator is free/instant, so it can afford
+    # 20 repeats on the random baseline to smooth out its variance.
+    if evaluator_name == "keyword":
+        methods = {
+            "ours": (ContextCompiler(store, counter=counter), REPEATS_DETERMINISTIC),
+            "full": (FullContextBaseline(store, counter=counter), REPEATS_DETERMINISTIC),
+            "random": (RandomContextBaseline(store, counter=counter, seed=1234), REPEATS_RANDOM),
+        }
+    else:
+        methods = {
+            "ours": (ContextCompiler(store, counter=counter), 1),
+            "full": (FullContextBaseline(store, counter=counter), 1),
+            "random": (RandomContextBaseline(store, counter=counter, seed=1234), 1),
+        }
 
     result: dict = {"slug": task_def.slug, "task": task_def.task, "methods": {}}
     for name, (compiler, repeats) in methods.items():
         runner = ExperimentRunner(compiler, evaluate)
-        points = runner.budget_sweep(task_def.task, BUDGETS, repeats=repeats)
+        points = runner.budget_sweep(task_def.task, budgets, repeats=repeats)
         result["methods"][name] = {
             "points": [p.to_dict() for p in points],
             "b95": b95(points, TARGET_SUCCESS_RATE),
@@ -133,17 +165,58 @@ def render_report(all_results: list[dict]) -> str:
     return "\n".join(lines)
 
 
-def main() -> None:
-    all_results = [run_task(t) for t in TASKS]
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    p = argparse.ArgumentParser(description="Run the context-compiler benchmark suite.")
+    p.add_argument(
+        "--evaluator",
+        choices=sorted(EVALUATOR_FACTORIES),
+        default="keyword",
+        help="keyword (free, default) or llm_judge (real Anthropic API calls, costs money)",
+    )
+    p.add_argument("--tasks", help="comma-separated task slugs to run (default: all)")
+    p.add_argument(
+        "--budgets", help="comma-separated token budgets (default: the built-in sweep)"
+    )
+    p.add_argument(
+        "--yes",
+        action="store_true",
+        help="skip the cost confirmation prompt for --evaluator llm_judge",
+    )
+    return p.parse_args(argv)
+
+
+def main(argv: list[str] | None = None) -> None:
+    args = parse_args(argv)
+    tasks = TASKS
+    if args.tasks:
+        wanted = set(args.tasks.split(","))
+        tasks = [t for t in TASKS if t.slug in wanted]
+    budgets = [int(b) for b in args.budgets.split(",")] if args.budgets else BUDGETS
+
+    if args.evaluator == "llm_judge":
+        call_count = len(tasks) * len(budgets) * 3  # 3 methods, 1 repeat each
+        print(
+            f"--evaluator llm_judge makes ~{call_count} real Anthropic API call(s) "
+            f"(claude-haiku-4-5) against {len(tasks)} task(s) x {len(budgets)} budget(s) "
+            "x 3 methods. This costs real money.",
+            file=sys.stderr,
+        )
+        if not args.yes:
+            print("Re-run with --yes to proceed.", file=sys.stderr)
+            raise SystemExit(1)
+
+    all_results = [run_task(t, evaluator_name=args.evaluator, budgets=budgets) for t in tasks]
 
     results_dir = BENCH_ROOT / "results"
     results_dir.mkdir(exist_ok=True)
-    (results_dir / "results.json").write_text(
+    suffix = "" if args.evaluator == "keyword" else f".{args.evaluator}"
+    (results_dir / f"results{suffix}.json").write_text(
         json.dumps(all_results, indent=2), encoding="utf-8"
     )
 
     report = render_report(all_results)
-    (BENCH_ROOT / "REPORT.md").write_text(report, encoding="utf-8")
+    if args.evaluator == "keyword":
+        (BENCH_ROOT / "REPORT.md").write_text(report, encoding="utf-8")
     print(report)
 
 

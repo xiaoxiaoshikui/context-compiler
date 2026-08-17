@@ -14,11 +14,20 @@ success within the swept budgets.
 
 | task | oracle tokens | B95 ours | B95 full | B95 random |
 |---|---|---|---|---|
-| oauth_safari | 74 | 150 | 150 | 400 |
-| payment_idempotency | 104 | 150 | 150 | 1200 |
-| db_migration | 111 | 250 | 150 | 700 |
+| oauth_safari | 73 | 150 | 150 | 400 |
+| payment_idempotency | 105 | 250 | 150 | 1200 |
+| db_migration | 112 | 250 | 150 | 700 |
 | rate_limit | 108 | 250 | 150 | 700 |
-| secrets_rotation | 99 | 150 | 250 | 700 |
+| secrets_rotation | 98 | 150 | 250 | 700 |
+| db_pool_timeout | 38 | 400 | 400 | 400 |
+| feature_flag_rollout | 30 | 400 | 250 | 250 |
+| rate_config_mismatch | 31 | 400 | 250 | 250 |
+| cache_ttl | 154 | - | 400 | 400 |
+| retry_backoff | 76 | 400 | 250 | 400 |
+| pagination_limit | 98 | 150 | 400 | 400 |
+| queue_delivery_decision | 106 | 250 | 150 | 400 |
+| sync_vs_async_decision | 87 | 150 | 150 | 400 |
+| soft_delete_decision | 87 | 150 | 150 | 400 |
 
 ## oauth_safari
 
@@ -42,7 +51,7 @@ Task: Fix duplicate customer charges when the payment gateway times out
 | budget | ours | full | random |
 |---|---|---|---|
 | 80 | 0.00 | 0.00 | 0.00 |
-| 150 | 1.00 | 1.00 | 0.40 |
+| 150 | 0.00 | 1.00 | 0.40 |
 | 250 | 1.00 | 1.00 | 0.10 |
 | 400 | 1.00 | 1.00 | 0.55 |
 | 700 | 1.00 | 1.00 | 0.85 |
@@ -88,8 +97,143 @@ Task: Rotate the expired API key used by the billing webhook
 |---|---|---|---|
 | 80 | 0.00 | 0.00 | 0.00 |
 | 150 | 1.00 | 0.00 | 0.20 |
-| 250 | 1.00 | 1.00 | 0.50 |
+| 250 | 1.00 | 1.00 | 0.55 |
 | 400 | 1.00 | 1.00 | 0.80 |
+| 700 | 1.00 | 1.00 | 1.00 |
+| 1200 | 1.00 | 1.00 | 1.00 |
+| 2000 | 1.00 | 1.00 | 1.00 |
+| 3000 | 1.00 | 1.00 | 1.00 |
+
+## db_pool_timeout
+
+Task: Diagnose why orders-api requests intermittently fail with 'timed out waiting for a database connection' during peak traffic
+
+| budget | ours | full | random |
+|---|---|---|---|
+| 80 | 0.00 | 0.00 | 0.35 |
+| 150 | 0.00 | 0.00 | 0.50 |
+| 250 | 0.00 | 0.00 | 0.70 |
+| 400 | 1.00 | 1.00 | 1.00 |
+| 700 | 1.00 | 1.00 | 1.00 |
+| 1200 | 1.00 | 1.00 | 1.00 |
+| 2000 | 1.00 | 1.00 | 1.00 |
+| 3000 | 1.00 | 1.00 | 1.00 |
+
+## feature_flag_rollout
+
+Task: Explain why only some users see the new checkout flow after it was marked enabled
+
+| budget | ours | full | random |
+|---|---|---|---|
+| 80 | 0.00 | 0.00 | 0.30 |
+| 150 | 0.00 | 0.00 | 0.70 |
+| 250 | 0.00 | 1.00 | 1.00 |
+| 400 | 1.00 | 1.00 | 1.00 |
+| 700 | 1.00 | 1.00 | 1.00 |
+| 1200 | 1.00 | 1.00 | 1.00 |
+| 2000 | 1.00 | 1.00 | 1.00 |
+| 3000 | 1.00 | 1.00 | 1.00 |
+
+## rate_config_mismatch
+
+Task: Investigate why the billing client raises a timeout error even though the billing service itself responds within 400ms
+
+| budget | ours | full | random |
+|---|---|---|---|
+| 80 | 0.00 | 0.00 | 0.30 |
+| 150 | 0.00 | 0.00 | 0.70 |
+| 250 | 0.00 | 1.00 | 1.00 |
+| 400 | 1.00 | 1.00 | 1.00 |
+| 700 | 1.00 | 1.00 | 1.00 |
+| 1200 | 1.00 | 1.00 | 1.00 |
+| 2000 | 1.00 | 1.00 | 1.00 |
+| 3000 | 1.00 | 1.00 | 1.00 |
+
+## cache_ttl
+
+Task: Explain why cached prices shown to users are sometimes stale for up to half a minute after an admin updates a price
+
+| budget | ours | full | random |
+|---|---|---|---|
+| 80 | 0.00 | 0.00 | 0.00 |
+| 150 | 0.00 | 0.00 | 0.00 |
+| 250 | 0.00 | 0.00 | 0.50 |
+| 400 | 0.00 | 1.00 | 1.00 |
+| 700 | 0.00 | 1.00 | 1.00 |
+| 1200 | 0.00 | 1.00 | 1.00 |
+| 2000 | 0.00 | 1.00 | 1.00 |
+| 3000 | 0.00 | 1.00 | 1.00 |
+
+## retry_backoff
+
+Task: Explain why a downstream outage causes this service's requests to back off for several seconds before giving up entirely
+
+| budget | ours | full | random |
+|---|---|---|---|
+| 80 | 0.00 | 0.00 | 0.00 |
+| 150 | 0.00 | 0.00 | 0.15 |
+| 250 | 0.00 | 1.00 | 0.55 |
+| 400 | 1.00 | 1.00 | 1.00 |
+| 700 | 1.00 | 1.00 | 1.00 |
+| 1200 | 1.00 | 1.00 | 1.00 |
+| 2000 | 1.00 | 1.00 | 1.00 |
+| 3000 | 1.00 | 1.00 | 1.00 |
+
+## pagination_limit
+
+Task: Explain why a customer with 40 orders only sees 25 of them in the export tool
+
+| budget | ours | full | random |
+|---|---|---|---|
+| 80 | 0.00 | 0.00 | 0.00 |
+| 150 | 1.00 | 0.00 | 0.45 |
+| 250 | 1.00 | 0.00 | 0.55 |
+| 400 | 1.00 | 1.00 | 1.00 |
+| 700 | 1.00 | 1.00 | 1.00 |
+| 1200 | 1.00 | 1.00 | 1.00 |
+| 2000 | 1.00 | 1.00 | 1.00 |
+| 3000 | 1.00 | 1.00 | 1.00 |
+
+## queue_delivery_decision
+
+Task: A teammate wants to switch the order events queue to at-most-once delivery to simplify consumer code -- evaluate it
+
+| budget | ours | full | random |
+|---|---|---|---|
+| 80 | 0.00 | 0.00 | 0.00 |
+| 150 | 0.00 | 1.00 | 0.30 |
+| 250 | 1.00 | 1.00 | 0.60 |
+| 400 | 1.00 | 1.00 | 1.00 |
+| 700 | 1.00 | 1.00 | 1.00 |
+| 1200 | 1.00 | 1.00 | 1.00 |
+| 2000 | 1.00 | 1.00 | 1.00 |
+| 3000 | 1.00 | 1.00 | 1.00 |
+
+## sync_vs_async_decision
+
+Task: Propose moving email sending back into the synchronous request handler for lower latency -- evaluate it
+
+| budget | ours | full | random |
+|---|---|---|---|
+| 80 | 0.00 | 0.00 | 0.00 |
+| 150 | 1.00 | 1.00 | 0.20 |
+| 250 | 1.00 | 1.00 | 0.60 |
+| 400 | 1.00 | 1.00 | 1.00 |
+| 700 | 1.00 | 1.00 | 1.00 |
+| 1200 | 1.00 | 1.00 | 1.00 |
+| 2000 | 1.00 | 1.00 | 1.00 |
+| 3000 | 1.00 | 1.00 | 1.00 |
+
+## soft_delete_decision
+
+Task: Propose switching customer record deletion from soft delete to a hard SQL DELETE for simplicity -- evaluate it
+
+| budget | ours | full | random |
+|---|---|---|---|
+| 80 | 0.00 | 0.00 | 0.00 |
+| 150 | 1.00 | 1.00 | 0.30 |
+| 250 | 1.00 | 1.00 | 0.80 |
+| 400 | 1.00 | 1.00 | 1.00 |
 | 700 | 1.00 | 1.00 | 1.00 |
 | 1200 | 1.00 | 1.00 | 1.00 |
 | 2000 | 1.00 | 1.00 | 1.00 |

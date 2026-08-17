@@ -331,17 +331,19 @@ python -m unittest discover -s tests -v
 ## Benchmarks
 
 `benchmarks/` contains a first, small slice of the benchmark harness
-described below: 5 synthetic tasks, each compiled under a budget sweep with
-`ours` (this compiler) against two naive baselines (`full`, `random`) plus
-an Oracle reference point.
+described below: 14 synthetic tasks across four task shapes, each compiled
+under a budget sweep with `ours` (this compiler) against two naive
+baselines (`full`, `random`) plus an Oracle reference point. An optional
+`--evaluator llm_judge` mode (real Anthropic API calls, opt-in, costs
+money) is a first step past pure keyword matching.
 
 ```bash
 python benchmarks/run.py
 ```
 
 See `benchmarks/README.md` for exactly what is and is not being measured —
-it is explicitly a starting point (5 tasks, keyword-check evaluator), not
-the 30-100 task benchmark recommended below.
+it is explicitly a starting point (14 tasks, mostly a keyword-check
+evaluator), not the 30-100 task benchmark recommended below.
 
 ## Current limitations
 
@@ -363,8 +365,9 @@ These are intentional extension points rather than hidden assumptions.
 ## Recommended next research iterations
 
 1. **Build a benchmark harness** around 30-100 coding tasks. *Started:*
-   `benchmarks/` has a 5-task version comparing `ours` against `full` and
-   `random` baselines with a keyword-check evaluator — see
+   `benchmarks/` has a 14-task version across four task shapes, comparing
+   `ours` against `full` and `random` baselines with a keyword-check
+   evaluator (plus an opt-in, paid LLM-judge evaluator) — see
    `benchmarks/README.md` for what it does and does not yet prove.
 2. Compare `Full`, `Random`, `Lexical/FTS`, `Embedding RAG`, `Ours`, and `Oracle` under equal budgets.
 3. Record task success, lifecycle input tokens, context misses and latency.
