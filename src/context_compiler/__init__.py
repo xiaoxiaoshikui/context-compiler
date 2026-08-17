@@ -1,4 +1,4 @@
-"""Minimum Sufficient Context compiler MVP."""
+"""Minimum Sufficient Context compiler."""
 
 from .compiler import CompilerConfig, ContextCompiler
 from .models import ContextItem, ContextKind, RenderLevel

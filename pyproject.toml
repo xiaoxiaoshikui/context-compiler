@@ -9,7 +9,7 @@ description = "A task-aware context compiler that finds high-utility context und
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
-authors = [{name = "Context Compiler MVP"}]
+authors = [{name = "Context Compiler Project"}]
 keywords = ["llm", "context", "mcp", "rag", "token", "agents"]
 classifiers = [
   "Development Status :: 3 - Alpha",

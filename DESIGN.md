@@ -128,7 +128,7 @@ Deletion experiments provide direct but expensive labels. Cheaper proxy labels c
 
 ## Context graph roadmap
 
-The current MVP stores flat items plus dependency strings. A stronger runtime should represent:
+The current implementation stores flat items plus dependency strings. A stronger runtime should represent:
 
 ```text
 Task

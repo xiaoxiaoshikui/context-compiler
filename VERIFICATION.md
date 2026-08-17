@@ -15,7 +15,7 @@ The bundled demo/evaluator is synthetic and is only a plumbing test. It is not e
 
 ## 2026-08-17 (session 2): baseline benchmark harness
 
-- Initialized git; first commit is the MVP as delivered.
+- Initialized git; first commit is the initial snapshot as delivered.
 - Added `src/context_compiler/baselines.py` (`FullContextBaseline`,
   `RandomContextBaseline`) and `benchmarks/` (5 synthetic tasks, `run.py`
   budget-sweep driver, generated `REPORT.md`/`results/results.json`).

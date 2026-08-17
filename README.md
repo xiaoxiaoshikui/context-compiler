@@ -1,10 +1,10 @@
-# Minimum Context Compiler (MVP)
+# Minimum Context Compiler
 
 A runnable reference implementation of the **Minimum Sufficient Context** idea:
 
 > Given a task and a hard context budget, choose the smallest/highest-utility representation of available information that is most likely to preserve task performance.
 
-This repository is deliberately designed as an **MVP research/runtime substrate**, not a finished production product. The core works with Python's standard library only. Raw context is stored losslessly in SQLite, while the model-facing representation can be lossy and progressively expandable.
+This repository is a research/runtime substrate for that idea. The core works with Python's standard library only. Raw context is stored losslessly in SQLite, while the model-facing representation can be lossy and progressively expandable.
 
 ## What is implemented
 
@@ -70,7 +70,7 @@ Budget ------> |   Allocator    |
                       LLM
 ```
 
-The central optimization implemented in the MVP is approximately:
+The central optimization implemented here is approximately:
 
 ```text
 maximize sum_i score(i) * fidelity(level_i)
@@ -343,7 +343,7 @@ See `benchmarks/README.md` for exactly what is and is not being measured —
 it is explicitly a starting point (5 tasks, keyword-check evaluator), not
 the 30-100 task benchmark recommended below.
 
-## Important MVP limitations
+## Current limitations
 
 This package intentionally makes the research hypothesis inspectable. It does **not** pretend that the current heuristic scorer solves context sufficiency.
 
