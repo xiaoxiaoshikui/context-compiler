@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "minimum-context-compiler"
+version = "0.1.0"
+description = "A task-aware context compiler that finds high-utility context under hard token budgets."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Context Compiler MVP"}]
+keywords = ["llm", "context", "mcp", "rag", "token", "agents"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+dependencies = []
+
+[project.optional-dependencies]
+mcp = ["mcp>=2,<3"]
+exact = ["tiktoken>=0.7"]
+all = ["mcp>=2,<3", "tiktoken>=0.7"]
+
+[project.scripts]
+ctxc = "context_compiler.cli:main"
+ctxc-http = "context_compiler.adapters.http_server:main"
+ctxc-mcp = "context_compiler.adapters.mcp_server:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
