@@ -13,6 +13,7 @@ from .models import (
     SelectedContext,
 )
 from .render import ContextRenderer
+from .retrieval import Retriever, TfidfRetriever, augment_with_critical_items
 from .scoring import ScoringWeights, activated_dependency_terms, score_item
 from .store import ContextStore
 from .tokenizer import HeuristicTokenCounter, TokenCounter
@@ -21,6 +22,11 @@ from .tokenizer import HeuristicTokenCounter, TokenCounter
 @dataclass(slots=True)
 class CompilerConfig:
     max_candidates: int = 120
+    # Upper bound on how many stored items the retriever ever ranks. Items
+    # beyond this are invisible to a compile() call regardless of relevance --
+    # generous enough to be "effectively everything" for a repository-sized
+    # store; raise it if you have a genuinely huge context store.
+    max_pool_size: int = 5000
     min_candidate_score: float = 0.055
     pinned_min_level: RenderLevel = RenderLevel.L2
     # L1 only ever renders a fixed lead line/outline regardless of the task, so an
@@ -61,12 +67,19 @@ class ContextCompiler:
         counter: TokenCounter | None = None,
         config: CompilerConfig | None = None,
         weights: ScoringWeights | None = None,
+        retriever: Retriever | None = None,
     ) -> None:
         self.store = store
         self.counter = counter or HeuristicTokenCounter()
         self.config = config or CompilerConfig()
         self.weights = weights or ScoringWeights()
+        self.retriever = retriever or TfidfRetriever()
         self.renderer = ContextRenderer(self.counter)
+
+    def _candidates(self, task: str, limit: int) -> list[ContextItem]:
+        pool = self.store.list(limit=self.config.max_pool_size)
+        ranked = self.retriever.rank(task, pool, limit=limit)
+        return augment_with_critical_items(ranked, pool)
 
     def compile(
         self,
@@ -86,7 +99,7 @@ class ContextCompiler:
         header_tokens = self.counter.count(header)
         available = max(0, budget - header_tokens - reserve)
 
-        candidates = self.store.candidate_search(task, limit=candidate_limit)
+        candidates = self._candidates(task, candidate_limit)
         first_pass = [(i, score_item(task, i, weights=self.weights)) for i in candidates]
         active = activated_dependency_terms(first_pass)
         scored = [(i, score_item(task, i, weights=self.weights, activated_terms=active)) for i in candidates]
@@ -234,7 +247,7 @@ class ContextCompiler:
         )
 
     def search(self, task: str, *, limit: int = 10) -> list[dict[str, object]]:
-        items = self.store.candidate_search(task, limit=max(limit * 4, 40))
+        items = self._candidates(task, max(limit * 4, 40))
         first = [(i, score_item(task, i, weights=self.weights)) for i in items]
         active = activated_dependency_terms(first)
         rescored = [

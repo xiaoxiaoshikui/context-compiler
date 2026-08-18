@@ -11,6 +11,9 @@ This repository is a research/runtime substrate for that idea. The core works wi
 - Lossless SQLite `ContextStore`
 - Repository/file ingestion
 - Basic dependency extraction for Python / JS / TS / Go
+- Pluggable first-stage retrieval (`context_compiler.retrieval.Retriever`):
+  TF-IDF cosine similarity by default, the original SQLite FTS5 query
+  still available as an opt-in alternative
 - Task-aware candidate ranking
 - Importance / omission-risk / recency / dependency scoring
 - Five context resolutions:
@@ -354,10 +357,19 @@ This package intentionally makes the research hypothesis inspectable. It does **
 
 Current limitations:
 
-1. Candidate retrieval is lexical/FTS, not embedding-based. `benchmarks/`
-   has a directly reproducible case of this failing outright (see its
-   README, finding #2): a relevant item with zero FTS term overlap never
-   enters the candidate pool, at any budget.
+1. Candidate retrieval is lexical (TF-IDF cosine similarity by default
+   since `context_compiler.retrieval`), not embedding-based — still no
+   stemming or synonym match. *Improved:* the original SQLite FTS5
+   `candidate_search` had a stronger failure mode than "worse ranking" —
+   an item with zero exact FTS term overlap was dropped from the
+   candidate pool entirely, at any budget (`benchmarks/README.md` "Real
+   findings" #2 has a reproducible case). The new default `TfidfRetriever`
+   scores every candidate instead of filtering by exact match first, so
+   it degrades to weaker ranking rather than silently losing items — the
+   old FTS retriever is still available as `FTSRetriever` /
+   `--retriever fts` for comparison. Real embedding-based retrieval is
+   still open; anything implementing the `Retriever` protocol can replace
+   `TfidfRetriever` without touching `ContextCompiler`.
 2. The scorer is hand-weighted rather than learned from task outcomes.
    *Started:* `benchmarks/learn_weights.py` fits an alternative preset
    (`LEARNED_WEIGHTS_V1` in `context_compiler.scoring`, not the default)
@@ -379,7 +391,11 @@ These are intentional extension points rather than hidden assumptions.
    `ours` against `full` and `random` baselines with a keyword-check
    evaluator (plus an opt-in, paid LLM-judge evaluator) — see
    `benchmarks/README.md` for what it does and does not yet prove.
-2. Compare `Full`, `Random`, `Lexical/FTS`, `Embedding RAG`, `Ours`, and `Oracle` under equal budgets.
+2. Compare `Full`, `Random`, `Lexical/FTS`, `Embedding RAG`, `Ours`, and
+   `Oracle` under equal budgets. *Started:* `benchmarks/run.py` now runs
+   `Full`, `Random`, `Ours` (TF-IDF by default), and `Ours` with the
+   original FTS retriever (`--retriever fts`) under equal budgets, plus
+   the `Oracle` token-cost reference point. `Embedding RAG` is still open.
 3. Record task success, lifecycle input tokens, context misses and latency.
 4. Estimate `B95`: smallest budget reaching 95% of full-context baseline quality.
 5. Run deletion tests on successful trajectories to generate labels for

@@ -8,6 +8,8 @@ not a real coding agent -- see tasks.py and README.md for the caveats.
 
 Usage:
     python benchmarks/run.py
+    python benchmarks/run.py --retriever fts   # compare against the pre-Phase-3 FTS retriever
+    python benchmarks/run.py --weights learned # compare against the Phase-2 learned weights
     python benchmarks/run.py --evaluator llm_judge --yes   # costs real API calls; see below
 
 Writes benchmarks/results/results.json and benchmarks/REPORT.md (keyword
@@ -40,6 +42,7 @@ from context_compiler.experiments import ExperimentRunner, b95  # noqa: E402
 from context_compiler.ingest import RepositoryIngestor  # noqa: E402
 from context_compiler.models import RenderLevel  # noqa: E402
 from context_compiler.render import ContextRenderer  # noqa: E402
+from context_compiler.retrieval import FTSRetriever, Retriever, TfidfRetriever  # noqa: E402
 from context_compiler.scoring import ScoringWeights  # noqa: E402
 from context_compiler.tokenizer import HeuristicTokenCounter  # noqa: E402
 
@@ -99,30 +102,40 @@ def load_learned_weights() -> ScoringWeights:
     return ScoringWeights(**data["learned_weights"])
 
 
+def make_retriever(name: str, store: ContextStore) -> Retriever:
+    if name == "fts":
+        return FTSRetriever(store)
+    return TfidfRetriever()
+
+
 def run_task(
     task_def: BenchTask,
     *,
     evaluator_name: str,
     budgets: list[int],
     weights: ScoringWeights | None = None,
+    retriever_name: str = "tfidf",
 ) -> dict:
     store = load_store(task_def.repo)
     counter = HeuristicTokenCounter()
     evaluate = EVALUATOR_FACTORIES[evaluator_name](task_def)
+    retriever = make_retriever(retriever_name, store)
 
     # llm_judge is a paid, non-instant call -- one shot per (method, budget),
     # no repeats. The keyword evaluator is free/instant, so it can afford
     # 20 repeats on the random baseline to smooth out its variance.
-    # `weights` only affects "ours" -- the naive baselines don't score at all.
+    # `weights`/`retriever` only affect "ours" -- the naive baselines don't
+    # score or retrieve at all.
+    ours = ContextCompiler(store, counter=counter, weights=weights, retriever=retriever)
     if evaluator_name == "keyword":
         methods = {
-            "ours": (ContextCompiler(store, counter=counter, weights=weights), REPEATS_DETERMINISTIC),
+            "ours": (ours, REPEATS_DETERMINISTIC),
             "full": (FullContextBaseline(store, counter=counter), REPEATS_DETERMINISTIC),
             "random": (RandomContextBaseline(store, counter=counter, seed=1234), REPEATS_RANDOM),
         }
     else:
         methods = {
-            "ours": (ContextCompiler(store, counter=counter, weights=weights), 1),
+            "ours": (ours, 1),
             "full": (FullContextBaseline(store, counter=counter), 1),
             "random": (RandomContextBaseline(store, counter=counter, seed=1234), 1),
         }
@@ -204,6 +217,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "(fit by benchmarks/learn_weights.py; run that first)",
     )
     p.add_argument(
+        "--retriever",
+        choices=["tfidf", "fts"],
+        default="tfidf",
+        help="tfidf (default; scores every candidate, never drops one on zero "
+        "exact-term overlap) or fts (the original SQLite FTS5 candidate_search, "
+        "kept for comparison -- see benchmarks/README.md Phase 3)",
+    )
+    p.add_argument(
         "--yes",
         action="store_true",
         help="skip the cost confirmation prompt for --evaluator llm_judge",
@@ -233,15 +254,24 @@ def main(argv: list[str] | None = None) -> None:
             raise SystemExit(1)
 
     all_results = [
-        run_task(t, evaluator_name=args.evaluator, budgets=budgets, weights=weights)
+        run_task(
+            t,
+            evaluator_name=args.evaluator,
+            budgets=budgets,
+            weights=weights,
+            retriever_name=args.retriever,
+        )
         for t in tasks
     ]
 
     results_dir = BENCH_ROOT / "results"
     results_dir.mkdir(exist_ok=True)
-    is_default_run = args.evaluator == "keyword" and args.weights == "default"
+    is_default_run = (
+        args.evaluator == "keyword" and args.weights == "default" and args.retriever == "tfidf"
+    )
     suffix = "" if args.evaluator == "keyword" else f".{args.evaluator}"
     suffix += "" if args.weights == "default" else f".{args.weights}_weights"
+    suffix += "" if args.retriever == "tfidf" else f".{args.retriever}_retriever"
     (results_dir / f"results{suffix}.json").write_text(
         json.dumps(all_results, indent=2), encoding="utf-8"
     )

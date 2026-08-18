@@ -14,20 +14,20 @@ success within the swept budgets.
 
 | task | oracle tokens | B95 ours | B95 full | B95 random |
 |---|---|---|---|---|
-| oauth_safari | 73 | 150 | 150 | 400 |
+| oauth_safari | 74 | 150 | 150 | 400 |
 | payment_idempotency | 105 | 250 | 150 | 1200 |
 | db_migration | 112 | 250 | 150 | 700 |
 | rate_limit | 108 | 250 | 150 | 700 |
-| secrets_rotation | 98 | 150 | 250 | 700 |
+| secrets_rotation | 99 | 150 | 250 | 700 |
 | db_pool_timeout | 38 | 400 | 400 | 400 |
 | feature_flag_rollout | 30 | 400 | 250 | 250 |
 | rate_config_mismatch | 31 | 400 | 250 | 250 |
-| cache_ttl | 154 | - | 400 | 400 |
+| cache_ttl | 154 | 700 | 400 | 400 |
 | retry_backoff | 76 | 400 | 250 | 400 |
-| pagination_limit | 98 | 150 | 400 | 400 |
-| queue_delivery_decision | 106 | 250 | 150 | 400 |
-| sync_vs_async_decision | 87 | 150 | 150 | 400 |
-| soft_delete_decision | 87 | 150 | 150 | 400 |
+| pagination_limit | 97 | 150 | 400 | 400 |
+| queue_delivery_decision | 107 | 250 | 150 | 400 |
+| sync_vs_async_decision | 86 | 150 | 150 | 400 |
+| soft_delete_decision | 88 | 150 | 150 | 400 |
 
 ## oauth_safari
 
@@ -111,8 +111,8 @@ Task: Diagnose why orders-api requests intermittently fail with 'timed out waiti
 | budget | ours | full | random |
 |---|---|---|---|
 | 80 | 0.00 | 0.00 | 0.35 |
-| 150 | 0.00 | 0.00 | 0.50 |
-| 250 | 0.00 | 0.00 | 0.70 |
+| 150 | 0.00 | 0.00 | 0.40 |
+| 250 | 0.00 | 0.00 | 0.90 |
 | 400 | 1.00 | 1.00 | 1.00 |
 | 700 | 1.00 | 1.00 | 1.00 |
 | 1200 | 1.00 | 1.00 | 1.00 |
@@ -159,10 +159,10 @@ Task: Explain why cached prices shown to users are sometimes stale for up to hal
 | 150 | 0.00 | 0.00 | 0.00 |
 | 250 | 0.00 | 0.00 | 0.50 |
 | 400 | 0.00 | 1.00 | 1.00 |
-| 700 | 0.00 | 1.00 | 1.00 |
-| 1200 | 0.00 | 1.00 | 1.00 |
-| 2000 | 0.00 | 1.00 | 1.00 |
-| 3000 | 0.00 | 1.00 | 1.00 |
+| 700 | 1.00 | 1.00 | 1.00 |
+| 1200 | 1.00 | 1.00 | 1.00 |
+| 2000 | 1.00 | 1.00 | 1.00 |
+| 3000 | 1.00 | 1.00 | 1.00 |
 
 ## retry_backoff
 

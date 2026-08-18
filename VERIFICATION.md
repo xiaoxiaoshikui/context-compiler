@@ -80,3 +80,30 @@ The bundled demo/evaluator is synthetic and is only a plumbing test. It is not e
   keyword-check proxy, not a real agent — see `benchmarks/README.md`
   "Phase 2" for the full, honest caveats before trusting this preset on
   anything that matters.
+
+## 2026-08-18 (session 3, Phase 3): pluggable retrieval, TF-IDF default
+
+- Added `src/context_compiler/retrieval.py`: a `Retriever` protocol,
+  `TfidfRetriever` (new default -- scores every candidate handed to it,
+  including zero-token-overlap ones, instead of hard-filtering by exact
+  match first) and `FTSRetriever` (wraps the original
+  `ContextStore.candidate_search` for comparison/opt-in). The
+  pinned/constraint/high-risk safety net moved out of `candidate_search`
+  into a retriever-agnostic `augment_with_critical_items` helper that
+  `ContextCompiler` applies uniformly.
+- `ContextCompiler.__init__` gains a `retriever` parameter (defaults to
+  `TfidfRetriever()`); `compile()`/`search()` no longer call
+  `store.candidate_search` directly -- `candidate_search` itself is
+  untouched and still directly usable.
+- Confirmed fix, by re-running the full 14-task sweep before/after:
+  `cache_ttl` B95 went from unreachable (never 100% success up to 3000
+  tokens) to `700`; the other 13 tasks are unchanged; 0 regressions.
+  Reproducible via `python benchmarks/run.py --retriever fts
+  --tasks cache_ttl` (old behavior) vs the new default. `benchmarks/run.py`
+  gained `--retriever {tfidf,fts}`.
+- `python -m unittest discover -s tests -v`: 28/28 PASS (17 previous + 11
+  new `test_retrieval.py`).
+- TF-IDF is still lexical (no stemming/synonyms) -- it narrows README
+  limitation #1, does not eliminate it. Real embedding-based retrieval
+  remains open and is a drop-in `Retriever` implementation away from
+  being swapped in.
