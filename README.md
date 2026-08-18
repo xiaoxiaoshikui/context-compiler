@@ -1,6 +1,7 @@
 # Minimum Context Compiler
 
 [![tests](https://github.com/xiaoxiaoshikui/context-compiler/actions/workflows/tests.yml/badge.svg)](https://github.com/xiaoxiaoshikui/context-compiler/actions/workflows/tests.yml)
+[![version](https://img.shields.io/badge/version-0.2.0-informational.svg)](CHANGELOG.md)
 [![python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![core dependencies](https://img.shields.io/badge/core%20dependencies-zero-brightgreen.svg)](#quick-start)
@@ -11,8 +12,59 @@ A runnable reference implementation of the **Minimum Sufficient Context** idea:
 
 This repository is a research/runtime substrate for that idea. The core works with Python's standard library only. Raw context is stored losslessly in SQLite, while the model-facing representation can be lossy and progressively expandable.
 
+## Highlights
+
+- **Zero required dependencies.** The core is pure Python + stdlib SQLite; `pip install -e .` and go.
+- **Lossless storage, lossy display.** Raw content is never discarded — every summary the model sees is reversible via `expand(CTX_ID)`.
+- **Five resolution levels per item** (pointer → outline → summary → excerpts → full text), chosen per item to fit a hard token budget via a marginal-utility-per-token allocator.
+- **Pluggable retrieval, scoring, and dependency resolution** — swap the default TF-IDF retriever, the hand-tuned scoring weights, or use the real cross-file dependency graph, each behind a small documented interface.
+- **CLI, an HTTP API with no dependencies, and an optional MCP v2 server** ship in the same package.
+- **A benchmark harness with reproducible before/after numbers** for every algorithmic change in this repo's history — including a real determinism bug the benchmarking work found and fixed. See [Benchmarks](#benchmarks).
+
+## 30-second demo
+
+```bash
+pip install -e .
+ctxc ingest ./examples/demo_repo
+ctxc compile "Fix the Safari OAuth callback regression; preserve the no-replay security invariant" --budget 400
+```
+
+```text
+used=382/400 items=5 candidates=5
+
+[CTX:c999b6e2f2ab0418 L4 kind=constraint source=SECURITY_CONSTRAINTS.md]
+SECURITY_CONSTRAINTS.md
+# OAuth safety constraints
+
+Authorization codes are single-use credentials. Never automatically replay an
+OAuth authorization-code exchange after an ambiguous network failure. A replay
+can violate provider guarantees and may create inconsistent login state.
+
+Safari callback handling must preserve the same single-exchange invariant as
+every other browser.
+
+[CTX:c476817ef26a34b3 L4 kind=test source=test_auth.py]
+test_auth.py
+from auth import handle_callback
+
+
+def test_safari_callback_uses_single_exchange():
+    result = handle_callback("Safari", "abc", "state-1")
+    assert result["token"].startswith("session:")
+
+... plus auth.py, oauth_client.py, and README.md at full fidelity, all within budget.
+```
+
+Every file that's safety-critical or directly relevant to the Safari bug made
+it into the working set at full fidelity, using 382 of a 400-token budget —
+see [Quick start](#quick-start) for the full walkthrough (search, expand,
+pinning a constraint by hand), or [Architecture](#architecture) for how the
+budget allocator decides what to include.
+
 ## Contents
 
+- [Highlights](#highlights)
+- [30-second demo](#30-second-demo)
 - [What is implemented](#what-is-implemented)
 - [Architecture](#architecture)
 - [Quick start](#quick-start)
@@ -26,6 +78,7 @@ This repository is a research/runtime substrate for that idea. The core works wi
 - [Benchmarks](#benchmarks)
 - [Current limitations](#current-limitations)
 - [Recommended next research iterations](#recommended-next-research-iterations)
+- [Contributing](#contributing)
 
 ## What is implemented
 
@@ -441,3 +494,10 @@ These are intentional extension points rather than hidden assumptions.
 8. Add online expansion/eviction based on agent actions.
 
 See `DESIGN.md` for the algorithm and extension points.
+
+## Contributing
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for dev setup, the benchmark
+before/after convention this repo expects for algorithmic changes, and
+how to add a benchmark task. [`CHANGELOG.md`](CHANGELOG.md) has the
+release history.

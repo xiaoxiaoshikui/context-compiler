@@ -173,3 +173,34 @@ wording lexically matches `handler.py` but the actual constraint lives in
   44/44 PASS (28 previous + 16 new: 13 `test_graph.py` resolution/BFS
   tests, 2 `test_store.py` determinism tests, 1 `test_compiler.py`
   determinism test).
+
+## 2026-08-18 (session 3, Phase 5): production hardening
+
+- Bumped version 0.1.0 -> 0.2.0 (`pyproject.toml`, `__init__.__version__`)
+  -- real new features plus a correctness fix warrant more than a patch
+  bump.
+- `ctxc --version`.
+- `cli.py`: split dispatch into `main()` (top-level `try`/`except`) +
+  `_dispatch()`. Previously-uncaught `FileNotFoundError` (bad `ingest`
+  path, missing `--content-file`), `ValueError` (`compile --budget 0`),
+  and `RuntimeError` (missing optional `tiktoken`/`mcp` dependency) now
+  print a one-line `error: ...` to stderr with a deliberate exit code
+  (2 for bad input/not-found, 1 for environment/dependency issues)
+  instead of a raw Python traceback. Verified manually against all four
+  cases plus the new `tests/test_cli.py` (6 tests: `--version`, each
+  error path, an add+compile happy path, and the existing
+  delete-not-found convention).
+- Added `CONTRIBUTING.md` (dev setup, the benchmark before/after
+  convention this repo expects for algorithmic PRs, how to add a
+  benchmark task, the honesty-in-docs norm, code style) and
+  `CHANGELOG.md` (0.1.0 and 0.2.0, built from actual git history, not
+  from memory).
+- README overhaul: added a "Highlights" section and a "30-second demo"
+  with real, verified command output (`ctxc ingest` + `ctxc compile`
+  against `examples/demo_repo`) ahead of the detailed sections, a status
+  badge row (CI, version, Python, license, zero core dependencies), and
+  a full table of contents -- the file had grown past 400 lines across
+  four sessions and was hard to navigate. Also fixed a leftover "MVP"
+  reference in `LICENSE` that survived the earlier rebrand.
+- `python -m compileall` + `python -m unittest discover -s tests -v`:
+  50/50 PASS (44 previous + 6 new `test_cli.py`).

@@ -5,6 +5,7 @@ import json
 import sys
 from pathlib import Path
 
+from . import __version__
 from .compiler import ContextCompiler
 from .ingest import RepositoryIngestor
 from .models import ContextKind, RenderLevel
@@ -25,6 +26,7 @@ def build_parser() -> argparse.ArgumentParser:
         prog="ctxc",
         description="Compile minimum sufficient context under a hard token budget.",
     )
+    p.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     p.add_argument("--db", default=".context-compiler.db", help="SQLite context store")
     p.add_argument(
         "--tokenizer",
@@ -93,7 +95,24 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     store = _store(args)
+    try:
+        return _dispatch(args, store)
+    except FileNotFoundError as exc:
+        print(f"error: file not found: {exc}", file=sys.stderr)
+        return 2
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    except RuntimeError as exc:
+        # Covers, e.g., `--tokenizer tiktoken` or `mcp` without the optional
+        # dependency installed -- both already raise a message telling the
+        # user what to `pip install`; this just stops it from surfacing as
+        # a raw traceback.
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
 
+
+def _dispatch(args: argparse.Namespace, store: ContextStore) -> int:
     if args.command == "init":
         _json(store.stats())
         return 0
