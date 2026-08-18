@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="1128" viewBox="0 0 860 1128" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+<rect width="860" height="1128" fill="#ffffff"/>
+<text x="200" y="27" font-size="16.5" font-weight="600" fill="#111827">Phase 2: hand-tuned vs learned scoring weights</text>
+<text x="200" y="46" font-size="12" fill="#4b5563">'ours' B95, default ScoringWeights vs LEARNED_WEIGHTS_V1 (not the default), both on today's full</text>
+<text x="200" y="62" font-size="12" fill="#4b5563">pipeline (TF-IDF + dependency graph). LEARNED_WEIGHTS_V1 predates the dependency graph and now</text>
+<text x="200" y="78" font-size="12" fill="#4b5563">regresses the 2 tasks that rely on it most -- see benchmarks/README.md Phase 2.</text>
+<rect x="200" y="104" width="12" height="12" rx="2" fill="#2563eb"/>
+<text x="217" y="114" font-size="12" fill="#374151">default weights</text>
+<rect x="348" y="104" width="12" height="12" rx="2" fill="#d97706"/>
+<text x="365" y="114" font-size="12" fill="#374151">learned weights</text>
+<line x1="200.0" y1="116" x2="200.0" y2="1082" stroke="#eef0f2" stroke-width="1"/>
+<text x="200.0" y="1100" font-size="11" fill="#6b7280" text-anchor="middle">0</text>
+<line x1="314.0" y1="116" x2="314.0" y2="1082" stroke="#eef0f2" stroke-width="1"/>
+<text x="314.0" y="1100" font-size="11" fill="#6b7280" text-anchor="middle">161</text>
+<line x1="428.0" y1="116" x2="428.0" y2="1082" stroke="#eef0f2" stroke-width="1"/>
+<text x="428.0" y="1100" font-size="11" fill="#6b7280" text-anchor="middle">322</text>
+<line x1="542.0" y1="116" x2="542.0" y2="1082" stroke="#eef0f2" stroke-width="1"/>
+<text x="542.0" y="1100" font-size="11" fill="#6b7280" text-anchor="middle">483</text>
+<line x1="656.0" y1="116" x2="656.0" y2="1082" stroke="#eef0f2" stroke-width="1"/>
+<text x="656.0" y="1100" font-size="11" fill="#6b7280" text-anchor="middle">644</text>
+<line x1="770.0" y1="116" x2="770.0" y2="1082" stroke="#eef0f2" stroke-width="1"/>
+<text x="770.0" y="1100" font-size="11" fill="#6b7280" text-anchor="middle">805</text>
+<text x="485.0" y="1122" font-size="11.5" fill="#6b7280" text-anchor="middle">B95 (tokens)</text>
+<text x="188" y="158.0" font-size="12" fill="#111827" text-anchor="end">oauth_safari</text>
+<rect x="200" y="128.0" width="106.2" height="19" rx="3" fill="#2563eb"/>
+<text x="312.2" y="141.5" font-size="11.5" fill="#111827">150</text>
+<rect x="200" y="154.0" width="106.2" height="19" rx="3" fill="#d97706"/>
+<text x="312.2" y="167.5" font-size="11.5" fill="#111827">150</text>
+<line x1="200" y1="184" x2="770" y2="184" stroke="#f3f4f6" stroke-width="1"/>
+<text x="188" y="222.0" font-size="12" fill="#111827" text-anchor="end">payment_idempotency</text>
+<rect x="200" y="192.0" width="106.2" height="19" rx="3" fill="#2563eb"/>
+<text x="312.2" y="205.5" font-size="11.5" fill="#111827">150</text>
+<rect x="200" y="218.0" width="106.2" height="19" rx="3" fill="#d97706"/>
+<text x="312.2" y="231.5" font-size="11.5" fill="#111827">150</text>
+<line x1="200" y1="248" x2="770" y2="248" stroke="#f3f4f6" stroke-width="1"/>
+<text x="188" y="286.0" font-size="12" fill="#111827" text-anchor="end">db_migration</text>
+<rect x="200" y="256.0" width="177.0" height="19" rx="3" fill="#2563eb"/>
+<text x="383.0" y="269.5" font-size="11.5" fill="#111827">250</text>
+<rect x="200" y="282.0" width="177.0" height="19" rx="3" fill="#d97706"/>
+<text x="383.0" y="295.5" font-size="11.5" fill="#111827">250</text>
+<line x1="200" y1="312" x2="770" y2="312" stroke="#f3f4f6" stroke-width="1"/>
+<text x="188" y="350.0" font-size="12" fill="#111827" text-anchor="end">rate_limit</text>
+<rect x="200" y="320.0" width="177.0" height="19" rx="3" fill="#2563eb"/>
+<text x="383.0" y="333.5" font-size="11.5" fill="#111827">250</text>
+<rect x="200" y="346.0" width="177.0" height="19" rx="3" fill="#d97706"/>
+<text x="383.0" y="359.5" font-size="11.5" fill="#111827">250</text>
+<line x1="200" y1="376" x2="770" y2="376" stroke="#f3f4f6" stroke-width="1"/>
+<text x="188" y="414.0" font-size="12" fill="#111827" text-anchor="end">secrets_rotation</text>
+<rect x="200" y="384.0" width="106.2" height="19" rx="3" fill="#2563eb"/>
+<text x="312.2" y="397.5" font-size="11.5" fill="#111827">150</text>
+<rect x="200" y="410.0" width="106.2" height="19" rx="3" fill="#d97706"/>
+<text x="312.2" y="423.5" font-size="11.5" fill="#111827">150</text>
+<line x1="200" y1="440" x2="770" y2="440" stroke="#f3f4f6" stroke-width="1"/>
+<text x="188" y="478.0" font-size="12" fill="#111827" text-anchor="end">db_pool_timeout</text>
+<rect x="200" y="448.0" width="283.2" height="19" rx="3" fill="#2563eb"/>
+<text x="489.2" y="461.5" font-size="11.5" fill="#111827">400</text>
+<rect x="200" y="474.0" width="283.2" height="19" rx="3" fill="#d97706"/>
+<text x="489.2" y="487.5" font-size="11.5" fill="#111827">400</text>
+<line x1="200" y1="504" x2="770" y2="504" stroke="#f3f4f6" stroke-width="1"/>
+<text x="188" y="542.0" font-size="12" fill="#111827" text-anchor="end">feature_flag_rollout</text>
+<rect x="200" y="512.0" width="177.0" height="19" rx="3" fill="#2563eb"/>
+<text x="383.0" y="525.5" font-size="11.5" fill="#111827">250</text>
+<rect x="200" y="538.0" width="177.0" height="19" rx="3" fill="#d97706"/>
+<text x="383.0" y="551.5" font-size="11.5" fill="#111827">250</text>
+<line x1="200" y1="568" x2="770" y2="568" stroke="#f3f4f6" stroke-width="1"/>
+<text x="188" y="606.0" font-size="12" fill="#111827" text-anchor="end">rate_config_mismatch</text>
+<rect x="200" y="576.0" width="283.2" height="19" rx="3" fill="#2563eb"/>
+<text x="489.2" y="589.5" font-size="11.5" fill="#111827">400</text>
+<rect x="200" y="602.0" width="283.2" height="19" rx="3" fill="#d97706"/>
+<text x="489.2" y="615.5" font-size="11.5" fill="#111827">400</text>
+<line x1="200" y1="632" x2="770" y2="632" stroke="#f3f4f6" stroke-width="1"/>
+<text x="188" y="670.0" font-size="12" fill="#111827" text-anchor="end">cache_ttl</text>
+<rect x="200" y="640.0" width="283.2" height="19" rx="3" fill="#2563eb"/>
+<text x="489.2" y="653.5" font-size="11.5" fill="#111827">400</text>
+<rect x="200" y="666.0" width="495.7" height="19" rx="3" fill="#d97706"/>
+<text x="701.7" y="679.5" font-size="11.5" fill="#111827">700</text>
+<line x1="200" y1="696" x2="770" y2="696" stroke="#f3f4f6" stroke-width="1"/>
+<text x="188" y="734.0" font-size="12" fill="#111827" text-anchor="end">retry_backoff</text>
+<rect x="200" y="704.0" width="283.2" height="19" rx="3" fill="#2563eb"/>
+<text x="489.2" y="717.5" font-size="11.5" fill="#111827">400</text>
+<rect x="200" y="730.0" width="283.2" height="19" rx="3" fill="#d97706"/>
+<text x="489.2" y="743.5" font-size="11.5" fill="#111827">400</text>
+<line x1="200" y1="760" x2="770" y2="760" stroke="#f3f4f6" stroke-width="1"/>
+<text x="188" y="798.0" font-size="12" fill="#111827" text-anchor="end">pagination_limit</text>
+<rect x="200" y="768.0" width="106.2" height="19" rx="3" fill="#2563eb"/>
+<text x="312.2" y="781.5" font-size="11.5" fill="#111827">150</text>
+<rect x="200" y="794.0" width="106.2" height="19" rx="3" fill="#d97706"/>
+<text x="312.2" y="807.5" font-size="11.5" fill="#111827">150</text>
+<line x1="200" y1="824" x2="770" y2="824" stroke="#f3f4f6" stroke-width="1"/>
+<text x="188" y="862.0" font-size="12" fill="#111827" text-anchor="end">queue_delivery_decision</text>
+<rect x="200" y="832.0" width="177.0" height="19" rx="3" fill="#2563eb"/>
+<text x="383.0" y="845.5" font-size="11.5" fill="#111827">250</text>
+<rect x="200" y="858.0" width="177.0" height="19" rx="3" fill="#d97706"/>
+<text x="383.0" y="871.5" font-size="11.5" fill="#111827">250</text>
+<line x1="200" y1="888" x2="770" y2="888" stroke="#f3f4f6" stroke-width="1"/>
+<text x="188" y="926.0" font-size="12" fill="#111827" text-anchor="end">sync_vs_async_decision</text>
+<rect x="200" y="896.0" width="106.2" height="19" rx="3" fill="#2563eb"/>
+<text x="312.2" y="909.5" font-size="11.5" fill="#111827">150</text>
+<rect x="200" y="922.0" width="106.2" height="19" rx="3" fill="#d97706"/>
+<text x="312.2" y="935.5" font-size="11.5" fill="#111827">150</text>
+<line x1="200" y1="952" x2="770" y2="952" stroke="#f3f4f6" stroke-width="1"/>
+<text x="188" y="990.0" font-size="12" fill="#111827" text-anchor="end">soft_delete_decision</text>
+<rect x="200" y="960.0" width="106.2" height="19" rx="3" fill="#2563eb"/>
+<text x="312.2" y="973.5" font-size="11.5" fill="#111827">150</text>
+<rect x="200" y="986.0" width="106.2" height="19" rx="3" fill="#d97706"/>
+<text x="312.2" y="999.5" font-size="11.5" fill="#111827">150</text>
+<line x1="200" y1="1016" x2="770" y2="1016" stroke="#f3f4f6" stroke-width="1"/>
+<text x="188" y="1054.0" font-size="12" fill="#111827" text-anchor="end">dependency_graph</text>
+<rect x="200" y="1024.0" width="177.0" height="19" rx="3" fill="#2563eb"/>
+<text x="383.0" y="1037.5" font-size="11.5" fill="#111827">250</text>
+<rect x="200" y="1050.0" width="283.2" height="19" rx="3" fill="#d97706"/>
+<text x="489.2" y="1063.5" font-size="11.5" fill="#111827">400</text>
+<line x1="200" y1="1080" x2="770" y2="1080" stroke="#f3f4f6" stroke-width="1"/>
+</svg>
