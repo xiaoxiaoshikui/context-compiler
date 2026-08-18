@@ -17,6 +17,24 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def new_item_id() -> str:
+    """A random id that always tokenizes as exactly one token.
+
+    Every rendered representation embeds the item id in its `[CTX:...]`
+    header (see render.py), so the id's own token count is part of every
+    budget decision. `HeuristicTokenCounter`'s regex matches a leading
+    letter plus following alphanumerics as a single token, but a bare hex
+    string starting with a digit (e.g. "8cfd6750...") splits into a
+    leading number token plus a trailing identifier token -- one token
+    more. A plain `uuid.uuid4().hex[:16]` starts with a digit roughly
+    5/8 of the time, so the *same* file, re-ingested, could cost a
+    different number of tokens purely by chance, occasionally flipping a
+    budget-boundary decision between runs. Prefixing with a fixed letter
+    makes every id single-token, deterministically.
+    """
+    return f"c{uuid.uuid4().hex[:15]}"
+
+
 class ContextStore:
     def __init__(self, path: str | Path = ".context-compiler.db") -> None:
         self.path = str(path)
@@ -89,7 +107,7 @@ class ContextStore:
     ) -> ContextItem:
         now = utc_now()
         item = ContextItem(
-            id=item_id or uuid.uuid4().hex[:16],
+            id=item_id or new_item_id(),
             title=title,
             content=content,
             kind=ContextKind(kind),
@@ -184,7 +202,17 @@ class ContextStore:
         if kind:
             query += " WHERE kind=?"
             params.append(kind)
-        query += " ORDER BY pinned DESC, updated_at DESC LIMIT ?"
+        # `source` is a final, reproducible tiebreaker: items ingested in the
+        # same batch commonly share the same `updated_at` down to the stored
+        # precision, and without a deterministic tiebreak SQLite's order for
+        # those tied rows is not guaranteed to be stable across separate
+        # connections/processes -- silently making candidate ranking, and
+        # therefore compile() output, nondeterministic for the same task and
+        # budget. `id` (a randomly generated UUID prefix) would be internally
+        # consistent within one run but *not* reproducible across separate
+        # ingests of the same repository, since it's re-randomized every
+        # insert -- `source` is stable across runs for the same input.
+        query += " ORDER BY pinned DESC, updated_at DESC, source ASC, id ASC LIMIT ?"
         params.append(limit)
         with self._conn() as conn:
             rows = conn.execute(query, params).fetchall()
@@ -199,7 +227,7 @@ class ContextStore:
             with self._conn() as conn:
                 rows = conn.execute(
                     "SELECT id FROM context_fts WHERE context_fts MATCH ? "
-                    "ORDER BY bm25(context_fts) LIMIT ?",
+                    "ORDER BY bm25(context_fts), source LIMIT ?",
                     (fts_query, limit),
                 ).fetchall()
             ids = [r["id"] for r in rows]

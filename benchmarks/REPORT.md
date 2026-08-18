@@ -14,20 +14,21 @@ success within the swept budgets.
 
 | task | oracle tokens | B95 ours | B95 full | B95 random |
 |---|---|---|---|---|
-| oauth_safari | 74 | 150 | 150 | 400 |
-| payment_idempotency | 105 | 250 | 150 | 1200 |
-| db_migration | 112 | 250 | 150 | 700 |
-| rate_limit | 108 | 250 | 150 | 700 |
-| secrets_rotation | 99 | 150 | 250 | 700 |
-| db_pool_timeout | 38 | 400 | 400 | 400 |
-| feature_flag_rollout | 30 | 400 | 250 | 250 |
+| oauth_safari | 73 | 150 | 150 | 400 |
+| payment_idempotency | 104 | 150 | 150 | 1200 |
+| db_migration | 111 | 250 | 150 | 700 |
+| rate_limit | 107 | 250 | 150 | 700 |
+| secrets_rotation | 98 | 150 | 250 | 700 |
+| db_pool_timeout | 37 | 400 | 400 | 400 |
+| feature_flag_rollout | 29 | 250 | 250 | 250 |
 | rate_config_mismatch | 31 | 400 | 250 | 250 |
-| cache_ttl | 154 | 700 | 400 | 400 |
-| retry_backoff | 76 | 400 | 250 | 400 |
+| cache_ttl | 153 | 400 | 400 | 400 |
+| retry_backoff | 75 | 400 | 150 | 400 |
 | pagination_limit | 97 | 150 | 400 | 400 |
-| queue_delivery_decision | 107 | 250 | 150 | 400 |
+| queue_delivery_decision | 106 | 250 | 150 | 400 |
 | sync_vs_async_decision | 86 | 150 | 150 | 400 |
-| soft_delete_decision | 88 | 150 | 150 | 400 |
+| soft_delete_decision | 87 | 150 | 150 | 400 |
+| dependency_graph | 116 | 250 | 700 | 700 |
 
 ## oauth_safari
 
@@ -51,7 +52,7 @@ Task: Fix duplicate customer charges when the payment gateway times out
 | budget | ours | full | random |
 |---|---|---|---|
 | 80 | 0.00 | 0.00 | 0.00 |
-| 150 | 0.00 | 1.00 | 0.40 |
+| 150 | 1.00 | 1.00 | 0.40 |
 | 250 | 1.00 | 1.00 | 0.10 |
 | 400 | 1.00 | 1.00 | 0.55 |
 | 700 | 1.00 | 1.00 | 0.85 |
@@ -111,8 +112,8 @@ Task: Diagnose why orders-api requests intermittently fail with 'timed out waiti
 | budget | ours | full | random |
 |---|---|---|---|
 | 80 | 0.00 | 0.00 | 0.35 |
-| 150 | 0.00 | 0.00 | 0.40 |
-| 250 | 0.00 | 0.00 | 0.90 |
+| 150 | 0.00 | 0.00 | 0.50 |
+| 250 | 0.00 | 0.00 | 0.70 |
 | 400 | 1.00 | 1.00 | 1.00 |
 | 700 | 1.00 | 1.00 | 1.00 |
 | 1200 | 1.00 | 1.00 | 1.00 |
@@ -127,7 +128,7 @@ Task: Explain why only some users see the new checkout flow after it was marked 
 |---|---|---|---|
 | 80 | 0.00 | 0.00 | 0.30 |
 | 150 | 0.00 | 0.00 | 0.70 |
-| 250 | 0.00 | 1.00 | 1.00 |
+| 250 | 1.00 | 1.00 | 1.00 |
 | 400 | 1.00 | 1.00 | 1.00 |
 | 700 | 1.00 | 1.00 | 1.00 |
 | 1200 | 1.00 | 1.00 | 1.00 |
@@ -158,7 +159,7 @@ Task: Explain why cached prices shown to users are sometimes stale for up to hal
 | 80 | 0.00 | 0.00 | 0.00 |
 | 150 | 0.00 | 0.00 | 0.00 |
 | 250 | 0.00 | 0.00 | 0.50 |
-| 400 | 0.00 | 1.00 | 1.00 |
+| 400 | 1.00 | 1.00 | 1.00 |
 | 700 | 1.00 | 1.00 | 1.00 |
 | 1200 | 1.00 | 1.00 | 1.00 |
 | 2000 | 1.00 | 1.00 | 1.00 |
@@ -171,7 +172,7 @@ Task: Explain why a downstream outage causes this service's requests to back off
 | budget | ours | full | random |
 |---|---|---|---|
 | 80 | 0.00 | 0.00 | 0.00 |
-| 150 | 0.00 | 0.00 | 0.15 |
+| 150 | 0.00 | 1.00 | 0.20 |
 | 250 | 0.00 | 1.00 | 0.55 |
 | 400 | 1.00 | 1.00 | 1.00 |
 | 700 | 1.00 | 1.00 | 1.00 |
@@ -234,6 +235,21 @@ Task: Propose switching customer record deletion from soft delete to a hard SQL 
 | 150 | 1.00 | 1.00 | 0.30 |
 | 250 | 1.00 | 1.00 | 0.80 |
 | 400 | 1.00 | 1.00 | 1.00 |
+| 700 | 1.00 | 1.00 | 1.00 |
+| 1200 | 1.00 | 1.00 | 1.00 |
+| 2000 | 1.00 | 1.00 | 1.00 |
+| 3000 | 1.00 | 1.00 | 1.00 |
+
+## dependency_graph
+
+Task: Customers are being sent payouts bigger than what they were originally charged at checkout; patch the endpoint so that stops happening
+
+| budget | ours | full | random |
+|---|---|---|---|
+| 80 | 0.00 | 0.00 | 0.00 |
+| 150 | 0.00 | 0.00 | 0.20 |
+| 250 | 1.00 | 0.00 | 0.20 |
+| 400 | 1.00 | 0.00 | 0.75 |
 | 700 | 1.00 | 1.00 | 1.00 |
 | 1200 | 1.00 | 1.00 | 1.00 |
 | 2000 | 1.00 | 1.00 | 1.00 |

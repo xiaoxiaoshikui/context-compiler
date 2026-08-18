@@ -107,3 +107,69 @@ The bundled demo/evaluator is synthetic and is only a plumbing test. It is not e
   limitation #1, does not eliminate it. Real embedding-based retrieval
   remains open and is a drop-in `Retriever` implementation away from
   being swapped in.
+
+## 2026-08-18 (session 3, Phase 4a): dependency graph + a determinism bug it found
+
+**Correctness fix (independent of the graph feature, affects every
+`compile()` call):** verifying the graph feature required running the
+same task+repo+budget repeatedly, which exposed that `compile()` was not
+deterministic -- the identical repository, re-ingested into a fresh
+store, could flip a budget-boundary result between runs. Two causes in
+`store.py`, both fixed:
+- `ContextStore.list()`'s `ORDER BY pinned DESC, updated_at DESC` had no
+  tiebreak; items ingested in the same batch commonly share `updated_at`
+  down to the stored precision, and SQLite doesn't guarantee stable order
+  for ties. Fixed: `ORDER BY pinned DESC, updated_at DESC, source ASC, id
+  ASC` (and the FTS5 `candidate_search` query gained the same `source`
+  tiebreak on its `bm25()` ordering).
+- Every rendered item embeds its id in a `[CTX:...]` header, so the id's
+  token count is part of every budget decision. Ids were bare
+  `uuid.uuid4().hex[:16]`; `HeuristicTokenCounter` tokenizes a hex string
+  starting with a letter as one token but one starting with a digit as
+  two, so the same content could cost a different token count purely by
+  chance (~5/8 of raw hex ids start with a digit) across separate
+  ingests. Fixed: ids are now `f"c{uuid.uuid4().hex[:15]}"`, always
+  one token.
+- Verified: `diff` on `results.json` from two independent full-suite
+  `benchmarks/run.py` runs is empty (was flaky before the fix -- directly
+  reproduced the flip on `payment_idempotency` at budget 150, ~50% of
+  runs, before fixing; 10/10 stable after). New regression tests:
+  `test_store.py::test_generated_ids_always_tokenize_as_a_single_token`,
+  `test_store.py::test_list_order_is_deterministic_across_repeated_ingests`,
+  `test_compiler.py::test_compile_is_deterministic_across_separate_ingests`.
+- This retroactively affects how to read earlier B95 numbers in this
+  file and in `benchmarks/REPORT.md`: swings spanning multiple budgets
+  (e.g. Phase 3's `cache_ttl` fix) are far too large to be this bug; a
+  single-budget-step difference on an already-close-to-threshold task
+  might not be. Confirmed one such case retroactively: Phase 2's
+  `payment_idempotency` B95 "improvement" (250 -> 150) does not reproduce
+  on a clean re-run after this fix (150 both ways) -- the other two
+  Phase 2 improvements do still hold.
+
+**The feature:** added `src/context_compiler/graph.py` (`DependencyGraph`,
+`build_dependency_graph`) resolving `ingest.py`'s import strings into real
+forward/reverse edges between stored items (Python relative/absolute,
+JS/TS relative; best-effort basename fallback elsewhere; ambiguous
+matches left unresolved rather than guessed). Also fixed `ingest.py` to
+capture Python relative-import level (previously discarded, so `from .
+import x` was silently dropped entirely). `ContextCompiler` gains
+`use_graph` (default `True`): a candidate within one resolved hop of a
+top-scoring item gets its dependency score set to its ceiling in the
+second scoring pass (`scoring.dependency_score`'s new `graph_related`
+param), applying even to a leaf item with no outgoing edges of its own
+(the edge can run the other way).
+
+Added a purpose-built 15th benchmark task, `dependency_graph`: task
+wording lexically matches `handler.py` but the actual constraint lives in
+`validators.py`, worded with deliberately no shared vocabulary --
+`validators.py` is only reachable via the resolved import edge.
+`benchmarks/run.py` gained `--graph {on,off}`.
+
+**Result, on a clean re-run after the determinism fix:** B95 improved on
+3/15 tasks (`feature_flag_rollout` 400->250, `cache_ttl` 700->400,
+`dependency_graph` 400->250), regressed on 0, unchanged on the rest.
+
+- `python -m compileall` + `python -m unittest discover -s tests -v`:
+  44/44 PASS (28 previous + 16 new: 13 `test_graph.py` resolution/BFS
+  tests, 2 `test_store.py` determinism tests, 1 `test_compiler.py`
+  determinism test).

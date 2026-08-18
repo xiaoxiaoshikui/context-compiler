@@ -12,6 +12,7 @@ from .models import (
     ScoreBreakdown,
     SelectedContext,
 )
+from .graph import build_dependency_graph
 from .render import ContextRenderer
 from .retrieval import Retriever, TfidfRetriever, augment_with_critical_items
 from .scoring import ScoringWeights, activated_dependency_terms, score_item
@@ -68,18 +69,41 @@ class ContextCompiler:
         config: CompilerConfig | None = None,
         weights: ScoringWeights | None = None,
         retriever: Retriever | None = None,
+        use_graph: bool = True,
     ) -> None:
         self.store = store
         self.counter = counter or HeuristicTokenCounter()
         self.config = config or CompilerConfig()
         self.weights = weights or ScoringWeights()
         self.retriever = retriever or TfidfRetriever()
+        self.use_graph = use_graph
         self.renderer = ContextRenderer(self.counter)
 
     def _candidates(self, task: str, limit: int) -> list[ContextItem]:
         pool = self.store.list(limit=self.config.max_pool_size)
         ranked = self.retriever.rank(task, pool, limit=limit)
         return augment_with_critical_items(ranked, pool)
+
+    def _graph_related_ids(
+        self, first_pass: list[tuple[ContextItem, ScoreBreakdown]], *, top_n: int = 12
+    ) -> set[str]:
+        """Item ids within one resolved dependency-graph hop of a top-scoring
+        candidate -- see graph.py. A real import edge is a stronger, more
+        trustworthy relatedness signal than the term-overlap proxy in
+        `activated_dependency_terms`, so a graph-adjacent item's dependency
+        score is set to its ceiling in the second scoring pass (see
+        `scoring.dependency_score`), rather than blended with it.
+        """
+        if not self.use_graph:
+            return set()
+        graph = build_dependency_graph(self.store, limit=self.config.max_pool_size)
+        top_ids = [
+            item.id for item, _ in sorted(first_pass, key=lambda x: x[1].total, reverse=True)[:top_n]
+        ]
+        related: set[str] = set()
+        for item_id in top_ids:
+            related |= graph.related(item_id, depth=1)
+        return related
 
     def compile(
         self,
@@ -102,7 +126,20 @@ class ContextCompiler:
         candidates = self._candidates(task, candidate_limit)
         first_pass = [(i, score_item(task, i, weights=self.weights)) for i in candidates]
         active = activated_dependency_terms(first_pass)
-        scored = [(i, score_item(task, i, weights=self.weights, activated_terms=active)) for i in candidates]
+        graph_related_ids = self._graph_related_ids(first_pass)
+        scored = [
+            (
+                i,
+                score_item(
+                    task,
+                    i,
+                    weights=self.weights,
+                    activated_terms=active,
+                    graph_related=i.id in graph_related_ids,
+                ),
+            )
+            for i in candidates
+        ]
         scored.sort(key=lambda x: x[1].total, reverse=True)
         scored = [
             pair
@@ -250,8 +287,18 @@ class ContextCompiler:
         items = self._candidates(task, max(limit * 4, 40))
         first = [(i, score_item(task, i, weights=self.weights)) for i in items]
         active = activated_dependency_terms(first)
+        graph_related_ids = self._graph_related_ids(first)
         rescored = [
-            (i, score_item(task, i, weights=self.weights, activated_terms=active))
+            (
+                i,
+                score_item(
+                    task,
+                    i,
+                    weights=self.weights,
+                    activated_terms=active,
+                    graph_related=i.id in graph_related_ids,
+                ),
+            )
             for i in items
         ]
         rescored.sort(key=lambda x: x[1].total, reverse=True)

@@ -334,22 +334,26 @@ python -m unittest discover -s tests -v
 ## Benchmarks
 
 `benchmarks/` contains a first, small slice of the benchmark harness
-described below: 14 synthetic tasks across four task shapes, each compiled
+described below: 15 synthetic tasks across five task shapes, each compiled
 under a budget sweep with `ours` (this compiler) against two naive
 baselines (`full`, `random`) plus an Oracle reference point. An optional
 `--evaluator llm_judge` mode (real Anthropic API calls, opt-in, costs
-money) is a first step past pure keyword matching, and
+money) is a first step past pure keyword matching,
 `benchmarks/learn_weights.py` fits an alternative scoring-weights preset
-from deletion-test labels, comparable against the default via
-`run.py --weights learned`.
+from deletion-test labels (`run.py --weights learned`), and
+`context_compiler.graph` resolves real cross-file dependency edges that
+feed back into scoring (`run.py --graph off` for comparison).
 
 ```bash
 python benchmarks/run.py
 ```
 
 See `benchmarks/README.md` for exactly what is and is not being measured —
-it is explicitly a starting point (14 tasks, mostly a keyword-check
-evaluator), not the 30-100 task benchmark recommended below.
+it is explicitly a starting point (15 tasks, mostly a keyword-check
+evaluator), not the 30-100 task benchmark recommended below. It also
+documents a real nondeterminism bug in `compile()` that this benchmarking
+work found and fixed (nonstable candidate ordering plus a token-count
+side effect of randomly-generated item ids) — see "Phase 4a" there.
 
 ## Current limitations
 
@@ -376,6 +380,12 @@ Current limitations:
    from deletion-test labels — real but modest results on 14 tasks; see
    `benchmarks/README.md` "Phase 2" for the honest numbers.
 3. Dependency extraction is shallow; it is not a full symbol/call graph.
+   *Improved:* `context_compiler.graph` resolves import strings into real
+   forward/reverse edges between stored items (Python relative/absolute
+   imports, JS/TS relative imports; best-effort elsewhere) and feeds
+   confirmed graph neighbors of top-scoring candidates back into scoring.
+   Still shallow (import-level, not call-level; no `sys.path`/package-root
+   modeling) — see `benchmarks/README.md` "Phase 4a".
 4. L2 summarization is extractive and deterministic; no LLM is required.
 5. The greedy allocator is a practical approximation, not a global optimizer.
 6. No automatic post-step working-set update/eviction policy yet.
@@ -387,7 +397,7 @@ These are intentional extension points rather than hidden assumptions.
 ## Recommended next research iterations
 
 1. **Build a benchmark harness** around 30-100 coding tasks. *Started:*
-   `benchmarks/` has a 14-task version across four task shapes, comparing
+   `benchmarks/` has a 15-task version across five task shapes, comparing
    `ours` against `full` and `random` baselines with a keyword-check
    evaluator (plus an opt-in, paid LLM-judge evaluator) — see
    `benchmarks/README.md` for what it does and does not yet prove.
@@ -404,6 +414,9 @@ These are intentional extension points rather than hidden assumptions.
    2 above — a first pass (pure-Python logistic regression, no learned
    sufficiency *threshold* yet, just re-weighted feature importances).
 7. Replace file-level dependency strings with a code/decision/entity graph.
+   *Started:* `context_compiler.graph` resolves import strings into real
+   forward/reverse edges between items and feeds them into scoring — see
+   limitation #3 above. Still import-level, not a true call/entity graph.
 8. Add online expansion/eviction based on agent actions.
 
 See `DESIGN.md` for the algorithm and extension points.

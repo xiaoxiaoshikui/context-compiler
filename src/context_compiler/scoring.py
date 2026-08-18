@@ -123,7 +123,21 @@ def recency_score(updated_at: str, half_life_days: float = 60.0) -> float:
         return 0.3
 
 
-def dependency_score(task: str, item: ContextItem, activated_terms: set[str] | None = None) -> float:
+def dependency_score(
+    task: str,
+    item: ContextItem,
+    activated_terms: set[str] | None = None,
+    *,
+    graph_related: bool = False,
+) -> float:
+    # A resolved graph edge (this item actually imports, or is imported by,
+    # a top-scoring candidate -- see graph.py) is a confirmed structural
+    # relationship, strictly more trustworthy than the term-overlap proxy
+    # below. It applies even to a leaf item with no outgoing dependencies
+    # of its own, since the edge may run the other way (something else
+    # depends on it), so this check comes before the early return.
+    if graph_related:
+        return 1.0
     if not item.dependencies:
         return 0.0
     q = term_set(task)
@@ -145,13 +159,14 @@ def score_item(
     *,
     weights: ScoringWeights | None = None,
     activated_terms: set[str] | None = None,
+    graph_related: bool = False,
 ) -> ScoreBreakdown:
     w = weights or ScoringWeights()
     rel = lexical_relevance(task, item)
     imp = max(0.0, min(1.0, item.importance))
     risk = max(0.0, min(1.0, item.omission_risk))
     rec = recency_score(item.updated_at)
-    dep = dependency_score(task, item, activated_terms)
+    dep = dependency_score(task, item, activated_terms, graph_related=graph_related)
     kp = _KIND_PRIOR.get(item.kind, 0.4)
     pin = 1.0 if item.pinned else 0.0
     total = (

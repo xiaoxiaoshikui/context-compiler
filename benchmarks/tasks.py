@@ -169,4 +169,19 @@ TASKS: list[BenchTask] = [
         required_substrings=("soft delete", "audit trail"),
         oracle_source="DECISIONS.md",
     ),
+    # --- dependency-graph: purpose-built to stress cross-file dependency
+    # propagation (context_compiler.graph), not lexical relevance. The task
+    # wording lexically matches handler.py ("refund", "handler", "amount")
+    # but the actual constraint lives in validators.py, worded with
+    # different vocabulary ("reimbursement", "surpass", "draining funds")
+    # deliberately chosen to minimize lexical overlap with the task text.
+    # validators.py is only reachable by knowing handler.py imports it.
+    BenchTask(
+        slug="dependency_graph",
+        repo=BENCH_ROOT / "repos" / "dependency_graph",
+        task="Customers are being sent payouts bigger than what they were "
+        "originally charged at checkout; patch the endpoint so that stops happening",
+        required_substrings=("cannot surpass the initial transaction total", "draining more funds"),
+        oracle_source="validators.py",
+    ),
 ]

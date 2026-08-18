@@ -10,6 +10,7 @@ Usage:
     python benchmarks/run.py
     python benchmarks/run.py --retriever fts   # compare against the pre-Phase-3 FTS retriever
     python benchmarks/run.py --weights learned # compare against the Phase-2 learned weights
+    python benchmarks/run.py --graph off       # compare against no dependency-graph boost
     python benchmarks/run.py --evaluator llm_judge --yes   # costs real API calls; see below
 
 Writes benchmarks/results/results.json and benchmarks/REPORT.md (keyword
@@ -115,6 +116,7 @@ def run_task(
     budgets: list[int],
     weights: ScoringWeights | None = None,
     retriever_name: str = "tfidf",
+    use_graph: bool = True,
 ) -> dict:
     store = load_store(task_def.repo)
     counter = HeuristicTokenCounter()
@@ -124,9 +126,11 @@ def run_task(
     # llm_judge is a paid, non-instant call -- one shot per (method, budget),
     # no repeats. The keyword evaluator is free/instant, so it can afford
     # 20 repeats on the random baseline to smooth out its variance.
-    # `weights`/`retriever` only affect "ours" -- the naive baselines don't
-    # score or retrieve at all.
-    ours = ContextCompiler(store, counter=counter, weights=weights, retriever=retriever)
+    # `weights`/`retriever`/`use_graph` only affect "ours" -- the naive
+    # baselines don't score, retrieve, or use the dependency graph at all.
+    ours = ContextCompiler(
+        store, counter=counter, weights=weights, retriever=retriever, use_graph=use_graph
+    )
     if evaluator_name == "keyword":
         methods = {
             "ours": (ours, REPEATS_DETERMINISTIC),
@@ -225,6 +229,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "kept for comparison -- see benchmarks/README.md Phase 3)",
     )
     p.add_argument(
+        "--graph",
+        choices=["on", "off"],
+        default="on",
+        help="on (default; scores get a boost from resolved dependency-graph "
+        "edges, see context_compiler.graph) or off, for comparison",
+    )
+    p.add_argument(
         "--yes",
         action="store_true",
         help="skip the cost confirmation prompt for --evaluator llm_judge",
@@ -240,6 +251,7 @@ def main(argv: list[str] | None = None) -> None:
         tasks = [t for t in TASKS if t.slug in wanted]
     budgets = [int(b) for b in args.budgets.split(",")] if args.budgets else BUDGETS
     weights = load_learned_weights() if args.weights == "learned" else None
+    use_graph = args.graph == "on"
 
     if args.evaluator == "llm_judge":
         call_count = len(tasks) * len(budgets) * 3  # 3 methods, 1 repeat each
@@ -260,6 +272,7 @@ def main(argv: list[str] | None = None) -> None:
             budgets=budgets,
             weights=weights,
             retriever_name=args.retriever,
+            use_graph=use_graph,
         )
         for t in tasks
     ]
@@ -267,11 +280,15 @@ def main(argv: list[str] | None = None) -> None:
     results_dir = BENCH_ROOT / "results"
     results_dir.mkdir(exist_ok=True)
     is_default_run = (
-        args.evaluator == "keyword" and args.weights == "default" and args.retriever == "tfidf"
+        args.evaluator == "keyword"
+        and args.weights == "default"
+        and args.retriever == "tfidf"
+        and use_graph
     )
     suffix = "" if args.evaluator == "keyword" else f".{args.evaluator}"
     suffix += "" if args.weights == "default" else f".{args.weights}_weights"
     suffix += "" if args.retriever == "tfidf" else f".{args.retriever}_retriever"
+    suffix += "" if use_graph else ".no_graph"
     (results_dir / f"results{suffix}.json").write_text(
         json.dumps(all_results, indent=2), encoding="utf-8"
     )

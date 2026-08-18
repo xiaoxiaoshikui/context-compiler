@@ -40,8 +40,12 @@ relevance ranking:
   default/logic (a cache TTL, a retry count), not a doc. No safety net.
 - **decision-record** (3 tasks) — a doc explaining "we chose X over Y, for
   reason Z"; the correct action is to respect the decision. No safety net.
+- **dependency-graph** (1 task) — the fact lives in a file the task wording
+  doesn't lexically mention at all; it's only reachable by knowing a file
+  the task *does* mention imports it. Purpose-built to stress
+  `context_compiler.graph`, not relevance ranking. See Phase 4 below.
 
-14 tasks total. The evaluator is a deterministic, case/whitespace-
+15 tasks total. The evaluator is a deterministic, case/whitespace-
 insensitive keyword-conjunction check against the compiled context text:
 does the working set contain the fact, at any budget.
 
@@ -187,7 +191,7 @@ being swapped in without touching `ContextCompiler`.
 This is explicitly a **starter** harness, not the benchmark the README
 roadmap describes:
 
-1. **14 tasks, not 30-100.** Larger and more varied than the first version
+1. **15 tasks, not 30-100.** Larger and more varied than the first version
    (5 tasks, one shape), but still too small to draw statistically
    confident conclusions; treat results as illustrative, not definitive.
 2. **Two evaluators, neither is a real agent/test harness.** The default
@@ -242,6 +246,85 @@ of the top-level README's limitation #1 ("Candidate retrieval is
 lexical/FTS, not embedding-based") — it's what motivated prioritizing
 Phase 3 (pluggable retrieval, TF-IDF default) over the other queued
 phases, and that phase closes this specific gap: see "Phase 3" above for
-the fix and the confirmed before/after (`cache_ttl` B95 now `700`, was
-unreachable). The underlying limitation (lexical, not embedding-based,
-still no stemming/synonyms) is narrowed, not eliminated.
+the fix and the confirmed before/after (`cache_ttl` B95 went from
+unreachable to `700` in Phase 3, then to `400` in Phase 4 below). The
+underlying limitation (lexical, not embedding-based, still no
+stemming/synonyms) is narrowed, not eliminated.
+
+## Phase 4a: a real dependency graph, and a determinism bug it surfaced
+
+Two things shipped together here because the second was found while
+verifying the first.
+
+**The feature.** `ingest.py`'s dependency extraction only ever produced
+opaque import strings (`"gateway_client"`, `".validators"`) -- text for
+the scorer's term-overlap heuristic, never an actual graph. There was no
+way to ask "what does this file import" as a resolved item id, and no
+reverse direction ("what imports this file") at all.
+`context_compiler/graph.py` resolves those strings against the same
+store -- a Python relative import, a `./foo` JS import, an absolute
+dotted path -- into real forward/reverse edges between `ContextItem`s,
+best-effort and conservative (an ambiguous basename match is left
+unresolved rather than guessed). `ContextCompiler` uses it to give a
+confirmed graph neighbor of a top-scoring candidate a dependency-score
+ceiling in the second scoring pass -- a real resolved import edge is a
+stronger signal than the term-overlap proxy `activated_dependency_terms`
+already used. Toggle for comparison: `python benchmarks/run.py --graph
+off`.
+
+A new task, `dependency_graph`, is purpose-built to isolate this: the
+task wording lexically matches `handler.py` ("checkout", "endpoint") but
+the actual constraint lives in `validators.py`, deliberately worded with
+no shared vocabulary ("reimbursement," "surpass," "draining funds") --
+`validators.py` is only reachable by knowing `handler.py` imports it.
+
+**The bug this surfaced.** Verifying the graph feature's before/after
+required running the same task+repo+budget repeatedly, which exposed
+something the benchmark had been silently absorbing since Phase 1:
+**`ContextCompiler.compile()` was not deterministic.** The identical
+repository, re-ingested into a fresh store, could occasionally flip a
+budget-boundary result between success and failure. Two compounding
+causes, both in `context_compiler/store.py`, now fixed:
+
+- `ContextStore.list()`'s `ORDER BY pinned DESC, updated_at DESC` had no
+  tiebreak. Items ingested in the same batch commonly share the same
+  `updated_at` down to the stored precision, and SQLite does not
+  guarantee a stable row order for ties -- candidate ranking could vary
+  across separate connections to separate database files for byte
+  -identical content. Fixed by adding `source ASC, id ASC` as an explicit,
+  reproducible-across-runs tiebreak (not `id` alone -- see below).
+- Every rendered item embeds its id in a `[CTX:...]` header, so the id's
+  own token count is part of every budget decision. Ids were a bare
+  random hex string (`uuid.uuid4().hex[:16]`); `HeuristicTokenCounter`'s
+  regex tokenizes a hex string starting with a letter as one token but
+  one starting with a digit as two (a leading number plus a trailing
+  identifier) -- so the *same* file, re-ingested, could cost a different
+  number of tokens purely by chance (roughly 5/8 of raw hex ids start
+  with a digit), occasionally shifting which side of a tight budget an
+  item landed on. Fixed by generating ids as `f"c{uuid.uuid4().hex[:15]}"`
+  -- always one token, deterministically.
+
+Confirmed fixed: `benchmarks/run.py`'s full sweep now produces
+byte-identical `results.json` across repeated runs (verified: `diff` on
+back-to-back full-suite runs), and `tests/test_store.py` /
+`tests/test_compiler.py` carry regression tests for both causes.
+
+**This retroactively affects how to read every earlier B95 number in this
+file.** Findings reported as large, multi-budget swings (`cache_ttl`
+going from unreachable to succeeding at every budget from 400 up) are far
+too big to be explained by a +-1-token boundary jitter and stand as
+reported. A B95 that differs from a neighboring baseline by exactly one
+budget step, on a task where the compiler was already close to a
+threshold, is the shape of result this bug could produce -- Phase 2's
+"3/14 tasks improved" comparison in particular included at least one such
+case (`payment_idempotency`, B95 250 -> 150) that a clean re-run **after
+this fix** shows as unchanged (150 both ways); the other two Phase 2
+improvements still hold under a clean re-run. Re-running any comparison
+in this file with the current code is the reliable way to check a
+specific number, rather than trusting the frozen JSON snapshots as
+permanently accurate.
+
+**The dependency-graph feature itself, on a clean re-run after the fix:**
+B95 improved on 3/15 tasks (`feature_flag_rollout` 400 -> 250, `cache_ttl`
+700 -> 400, and the purpose-built `dependency_graph` 400 -> 250),
+regressed on 0, unchanged on the rest.

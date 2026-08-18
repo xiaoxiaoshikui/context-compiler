@@ -65,6 +65,46 @@ class CompilerTests(unittest.TestCase):
             self.assertEqual(LEARNED_WEIGHTS_V1.recency, default.recency)
             self.assertEqual(LEARNED_WEIGHTS_V1.pin_bonus, default.pin_bonus)
 
+    def test_compile_is_deterministic_across_separate_ingests(self):
+        # Regression test for a real bug found via benchmarks/run.py: a
+        # budget-boundary compile() result flipped between success and
+        # failure across repeated runs against *identical* repo content,
+        # traced to two compounding nondeterminism sources now fixed --
+        # ContextStore.list()'s ORDER BY lacked a stable tiebreak for items
+        # sharing the same `updated_at`, and randomly-generated item ids
+        # (embedded in every rendered [CTX:...] header) tokenized as either
+        # one or two tokens depending on whether the random hex happened to
+        # start with a digit, shifting reported token counts by +-1 at
+        # random. Re-ingesting the same content into a fresh store must now
+        # produce byte-identical compile() output at a tight, boundary-prone
+        # budget.
+        # Note: raw output *text* legitimately differs run to run -- it embeds
+        # each item's freshly-generated random id -- so compare used_tokens
+        # and the (source, level) selection set instead, which must not.
+        def compile_once() -> tuple[int, tuple[tuple[str, str], ...]]:
+            with tempfile.TemporaryDirectory() as tmp:
+                store = ContextStore(Path(tmp) / "ctx.db")
+                store.add(
+                    title="POLICY.md",
+                    source="POLICY.md",
+                    kind="constraint",
+                    content=(
+                        "Payment retry policy.\n\n"
+                        "Never retry a charge without a confirmed idempotency key; "
+                        "a blind retry after a gateway timeout can double-bill the customer."
+                    ),
+                )
+                store.add(title="charge.py", source="charge.py", kind="code", content="def charge(): ...")
+                store.add(title="gateway.py", source="gateway.py", kind="code", content="def call(): ...")
+                store.add(title="README.md", source="README.md", kind="doc", content="Payments service.")
+                compiler = ContextCompiler(store)
+                result = compiler.compile("Fix duplicate charges on gateway timeout", budget=150)
+                selection_shape = tuple(sorted((s.source, s.level.value) for s in result.selections))
+                return result.used_tokens, selection_shape
+
+        outputs = {compile_once() for _ in range(15)}
+        self.assertEqual(len(outputs), 1, f"compile() shape varied across ingests: {outputs}")
+
     def test_reversible_expand(self):
         with tempfile.TemporaryDirectory() as tmp:
             store = ContextStore(Path(tmp) / "ctx.db")

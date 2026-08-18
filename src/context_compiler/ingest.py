@@ -212,8 +212,17 @@ def extract_dependencies(path: Path, content: str) -> list[str]:
             for node in ast.walk(tree):
                 if isinstance(node, ast.Import):
                     deps.update(a.name for a in node.names)
-                elif isinstance(node, ast.ImportFrom) and node.module:
-                    deps.add(node.module)
+                elif isinstance(node, ast.ImportFrom):
+                    dots = "." * node.level
+                    if node.module:
+                        # e.g. "from .gateway_client import X" -> ".gateway_client";
+                        # dots encode how many directories up to resolve from
+                        # (see graph.py) without changing the stored string schema.
+                        deps.add(f"{dots}{node.module}")
+                    elif dots:
+                        # "from . import sibling_a, sibling_b" has no module --
+                        # each imported name is itself a resolvable relative module.
+                        deps.update(f"{dots}{alias.name}" for alias in node.names)
         except SyntaxError:
             pass
     elif suffix in {".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs"}:
