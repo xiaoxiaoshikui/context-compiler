@@ -31,6 +31,35 @@ class ScoringWeights:
     pin_bonus: float = 0.18
 
 
+def _learned_weights_v1() -> ScoringWeights:
+    """Fit by benchmarks/learn_weights.py from deletion-test labels on the
+    14-task benchmark (see benchmarks/README.md, "Phase 2"). NOT the
+    default -- pass explicitly via ContextCompiler(store, weights=...) if
+    you want to try it.
+
+    Evidence, honestly: leave-one-task-out CV top-1 ranking accuracy is
+    69% vs a 25% chance baseline (13 folds) -- a real signal, but on only
+    14 self-authored synthetic tasks. `recency` and `pin_bonus` kept their
+    hand-tuned defaults because this benchmark never varies those two
+    features (every item has the same age; nothing is manually pinned),
+    so there was nothing to learn for them. Re-running the full benchmark
+    sweep with these weights instead of the defaults improved B95 on 3/14
+    tasks, regressed none, left the rest unchanged.
+    """
+    return ScoringWeights(
+        relevance=0.18475032950523268,
+        importance=0.15344061572935272,
+        risk=0.2631865289404587,
+        recency=0.04,
+        dependency=0.010099206688271443,
+        kind_prior=0.31852331913668464,
+        pin_bonus=0.18,
+    )
+
+
+LEARNED_WEIGHTS_V1 = _learned_weights_v1()
+
+
 _KIND_PRIOR: dict[ContextKind, float] = {
     ContextKind.CONSTRAINT: 1.0,
     ContextKind.DECISION: 0.85,

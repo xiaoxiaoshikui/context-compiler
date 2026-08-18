@@ -40,6 +40,7 @@ from context_compiler.experiments import ExperimentRunner, b95  # noqa: E402
 from context_compiler.ingest import RepositoryIngestor  # noqa: E402
 from context_compiler.models import RenderLevel  # noqa: E402
 from context_compiler.render import ContextRenderer  # noqa: E402
+from context_compiler.scoring import ScoringWeights  # noqa: E402
 from context_compiler.tokenizer import HeuristicTokenCounter  # noqa: E402
 
 from tasks import TASKS, BenchTask, make_evaluator  # noqa: E402
@@ -87,7 +88,24 @@ EVALUATOR_FACTORIES = {
 }
 
 
-def run_task(task_def: BenchTask, *, evaluator_name: str, budgets: list[int]) -> dict:
+def load_learned_weights() -> ScoringWeights:
+    path = BENCH_ROOT / "results" / "learned_weights.json"
+    if not path.exists():
+        raise SystemExit(
+            "benchmarks/results/learned_weights.json not found -- run "
+            "`python benchmarks/learn_weights.py` first."
+        )
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return ScoringWeights(**data["learned_weights"])
+
+
+def run_task(
+    task_def: BenchTask,
+    *,
+    evaluator_name: str,
+    budgets: list[int],
+    weights: ScoringWeights | None = None,
+) -> dict:
     store = load_store(task_def.repo)
     counter = HeuristicTokenCounter()
     evaluate = EVALUATOR_FACTORIES[evaluator_name](task_def)
@@ -95,15 +113,16 @@ def run_task(task_def: BenchTask, *, evaluator_name: str, budgets: list[int]) ->
     # llm_judge is a paid, non-instant call -- one shot per (method, budget),
     # no repeats. The keyword evaluator is free/instant, so it can afford
     # 20 repeats on the random baseline to smooth out its variance.
+    # `weights` only affects "ours" -- the naive baselines don't score at all.
     if evaluator_name == "keyword":
         methods = {
-            "ours": (ContextCompiler(store, counter=counter), REPEATS_DETERMINISTIC),
+            "ours": (ContextCompiler(store, counter=counter, weights=weights), REPEATS_DETERMINISTIC),
             "full": (FullContextBaseline(store, counter=counter), REPEATS_DETERMINISTIC),
             "random": (RandomContextBaseline(store, counter=counter, seed=1234), REPEATS_RANDOM),
         }
     else:
         methods = {
-            "ours": (ContextCompiler(store, counter=counter), 1),
+            "ours": (ContextCompiler(store, counter=counter, weights=weights), 1),
             "full": (FullContextBaseline(store, counter=counter), 1),
             "random": (RandomContextBaseline(store, counter=counter, seed=1234), 1),
         }
@@ -178,6 +197,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--budgets", help="comma-separated token budgets (default: the built-in sweep)"
     )
     p.add_argument(
+        "--weights",
+        choices=["default", "learned"],
+        default="default",
+        help="default (hand-tuned, ships with the compiler) or learned "
+        "(fit by benchmarks/learn_weights.py; run that first)",
+    )
+    p.add_argument(
         "--yes",
         action="store_true",
         help="skip the cost confirmation prompt for --evaluator llm_judge",
@@ -192,6 +218,7 @@ def main(argv: list[str] | None = None) -> None:
         wanted = set(args.tasks.split(","))
         tasks = [t for t in TASKS if t.slug in wanted]
     budgets = [int(b) for b in args.budgets.split(",")] if args.budgets else BUDGETS
+    weights = load_learned_weights() if args.weights == "learned" else None
 
     if args.evaluator == "llm_judge":
         call_count = len(tasks) * len(budgets) * 3  # 3 methods, 1 repeat each
@@ -205,17 +232,22 @@ def main(argv: list[str] | None = None) -> None:
             print("Re-run with --yes to proceed.", file=sys.stderr)
             raise SystemExit(1)
 
-    all_results = [run_task(t, evaluator_name=args.evaluator, budgets=budgets) for t in tasks]
+    all_results = [
+        run_task(t, evaluator_name=args.evaluator, budgets=budgets, weights=weights)
+        for t in tasks
+    ]
 
     results_dir = BENCH_ROOT / "results"
     results_dir.mkdir(exist_ok=True)
+    is_default_run = args.evaluator == "keyword" and args.weights == "default"
     suffix = "" if args.evaluator == "keyword" else f".{args.evaluator}"
+    suffix += "" if args.weights == "default" else f".{args.weights}_weights"
     (results_dir / f"results{suffix}.json").write_text(
         json.dumps(all_results, indent=2), encoding="utf-8"
     )
 
     report = render_report(all_results)
-    if args.evaluator == "keyword":
+    if is_default_run:
         (BENCH_ROOT / "REPORT.md").write_text(report, encoding="utf-8")
     print(report)
 

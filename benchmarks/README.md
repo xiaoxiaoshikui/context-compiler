@@ -77,6 +77,64 @@ with tasks × budgets × methods. It is still a judge over text, not a real
 coding agent that produces and tests a patch — see "Honest limitations"
 below.
 
+## Phase 2: learned scoring weights (opt-in, not the default)
+
+```bash
+python benchmarks/learn_weights.py
+```
+
+Runs `ExperimentRunner.deletion_test` against every task's compiled
+working set (budget 3000, generous enough that nearly every candidate is
+selected), pairing each selected item's raw `ScoreBreakdown` components
+(relevance, importance, risk, recency, dependency, kind_prior, pin_bonus)
+with a label: did removing this item break the task. That is exactly the
+"direct but expensive" labeling strategy DESIGN.md describes for a future
+Context Sufficiency / Marginal Value Estimator. A pure-Python (no
+numpy/sklearn — confirmed unavailable in this environment) L2-regularized
+logistic regression fits those labels, and the result is written to
+`benchmarks/results/learned_weights.json`.
+
+**Results, honestly:** 60 examples from 14 tasks (13 "essential" / 47
+not). Leave-one-task-out CV: classification accuracy 0.78 is barely above
+the 0.78 majority-class baseline (always guessing "not essential") — not
+informative given the class imbalance. The metric that actually matches
+how the compiler uses these weights — to *rank* candidates, not classify
+them — is whether the top-ranked item in a held-out task is the essential
+one: **69%, against a 25% chance baseline**. That's a real signal on a
+small sample, not proof. Two features (`recency`, `pin_bonus`) are
+near-constant across every example in this benchmark (every item has the
+same age; nothing is manually pinned), so their fitted coefficients are
+floor-value artifacts, not learned signal — `coefficients_to_weights`
+detects this and keeps those two at their hand-tuned default instead of
+using the artifact.
+
+The fitted result ships as `LEARNED_WEIGHTS_V1` in
+`context_compiler.scoring` — **not the default**, opt in explicitly:
+
+```python
+from context_compiler import ContextCompiler, ContextStore
+from context_compiler.scoring import LEARNED_WEIGHTS_V1
+
+compiler = ContextCompiler(store, weights=LEARNED_WEIGHTS_V1)
+```
+
+or from this benchmark's own sweep, to compare directly against the
+default:
+
+```bash
+python benchmarks/run.py --weights learned
+```
+
+Doing that head-to-head comparison across all 14 tasks: **B95 improved on
+3/14 tasks (`payment_idempotency`, `feature_flag_rollout`,
+`retry_backoff`), regressed on none, unchanged on the rest** (`cache_ttl`
+still fails at every budget either way — reweighting scores among
+candidates that already passed FTS retrieval can't recover an item FTS
+never let into the pool in the first place; see finding #2 below). A
+small, real, honestly-bounded improvement — not remotely enough evidence
+to make this the shipped default on 14 self-authored synthetic tasks
+scored by a keyword-check proxy, which is exactly why it isn't.
+
 ## Honest limitations of this slice
 
 This is explicitly a **starter** harness, not the benchmark the README

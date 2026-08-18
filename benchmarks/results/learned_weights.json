@@ -1,0 +1,44 @@
+{
+  "n_examples": 60,
+  "n_positive": 13,
+  "cv": {
+    "accuracy": 0.7833333333333333,
+    "majority_class_baseline_accuracy": 0.7833333333333333,
+    "n": 60,
+    "top1_essential_item_ranked_first": 0.6923076923076923,
+    "top1_chance_baseline": 0.24743589743589745,
+    "top1_n": 13
+  },
+  "intercept": -1.4872442681680393,
+  "coefficients": {
+    "relevance": 0.09146774356038757,
+    "importance": 0.07596666771239993,
+    "risk": 0.13030059541513606,
+    "recency": 1.5467029837348856e-10,
+    "dependency": -0.006131903944540324,
+    "kind_prior": 0.1576971978930765,
+    "pin_bonus": 0.0
+  },
+  "untestable_features": [
+    "pin_bonus",
+    "recency"
+  ],
+  "learned_weights": {
+    "relevance": 0.18475032950523268,
+    "importance": 0.15344061572935272,
+    "risk": 0.2631865289404587,
+    "recency": 0.04,
+    "dependency": 0.010099206688271443,
+    "kind_prior": 0.3185233191366847,
+    "pin_bonus": 0.18
+  },
+  "default_weights": {
+    "relevance": 0.55,
+    "importance": 0.13,
+    "risk": 0.14,
+    "recency": 0.04,
+    "dependency": 0.08,
+    "kind_prior": 0.03,
+    "pin_bonus": 0.18
+  }
+}

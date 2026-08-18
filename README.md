@@ -335,7 +335,10 @@ described below: 14 synthetic tasks across four task shapes, each compiled
 under a budget sweep with `ours` (this compiler) against two naive
 baselines (`full`, `random`) plus an Oracle reference point. An optional
 `--evaluator llm_judge` mode (real Anthropic API calls, opt-in, costs
-money) is a first step past pure keyword matching.
+money) is a first step past pure keyword matching, and
+`benchmarks/learn_weights.py` fits an alternative scoring-weights preset
+from deletion-test labels, comparable against the default via
+`run.py --weights learned`.
 
 ```bash
 python benchmarks/run.py
@@ -351,8 +354,15 @@ This package intentionally makes the research hypothesis inspectable. It does **
 
 Current limitations:
 
-1. Candidate retrieval is lexical/FTS, not embedding-based.
+1. Candidate retrieval is lexical/FTS, not embedding-based. `benchmarks/`
+   has a directly reproducible case of this failing outright (see its
+   README, finding #2): a relevant item with zero FTS term overlap never
+   enters the candidate pool, at any budget.
 2. The scorer is hand-weighted rather than learned from task outcomes.
+   *Started:* `benchmarks/learn_weights.py` fits an alternative preset
+   (`LEARNED_WEIGHTS_V1` in `context_compiler.scoring`, not the default)
+   from deletion-test labels — real but modest results on 14 tasks; see
+   `benchmarks/README.md` "Phase 2" for the honest numbers.
 3. Dependency extraction is shallow; it is not a full symbol/call graph.
 4. L2 summarization is extractive and deterministic; no LLM is required.
 5. The greedy allocator is a practical approximation, not a global optimizer.
@@ -372,8 +382,11 @@ These are intentional extension points rather than hidden assumptions.
 2. Compare `Full`, `Random`, `Lexical/FTS`, `Embedding RAG`, `Ours`, and `Oracle` under equal budgets.
 3. Record task success, lifecycle input tokens, context misses and latency.
 4. Estimate `B95`: smallest budget reaching 95% of full-context baseline quality.
-5. Run deletion tests on successful trajectories to generate labels for context marginal value.
-6. Train/fit a context-value model from those labels.
+5. Run deletion tests on successful trajectories to generate labels for
+   context marginal value. *Started:* see item 2 above.
+6. Train/fit a context-value model from those labels. *Started:* see item
+   2 above — a first pass (pure-Python logistic regression, no learned
+   sufficiency *threshold* yet, just re-weighted feature importances).
 7. Replace file-level dependency strings with a code/decision/entity graph.
 8. Add online expansion/eviction based on agent actions.
 
