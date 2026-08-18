@@ -1,10 +1,31 @@
 # Minimum Context Compiler
 
+[![tests](https://github.com/xiaoxiaoshikui/context-compiler/actions/workflows/tests.yml/badge.svg)](https://github.com/xiaoxiaoshikui/context-compiler/actions/workflows/tests.yml)
+[![python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![core dependencies](https://img.shields.io/badge/core%20dependencies-zero-brightgreen.svg)](#quick-start)
+
 A runnable reference implementation of the **Minimum Sufficient Context** idea:
 
 > Given a task and a hard context budget, choose the smallest/highest-utility representation of available information that is most likely to preserve task performance.
 
 This repository is a research/runtime substrate for that idea. The core works with Python's standard library only. Raw context is stored losslessly in SQLite, while the model-facing representation can be lossy and progressively expandable.
+
+## Contents
+
+- [What is implemented](#what-is-implemented)
+- [Architecture](#architecture)
+- [Quick start](#quick-start)
+- [Exact-ish token counting](#exact-ish-token-counting)
+- [MCP server](#mcp-server)
+- [HTTP API](#http-api)
+- [Python API](#python-api)
+- [Experiments](#experiments)
+- [Run the included demo](#run-the-included-demo)
+- [Run tests](#run-tests)
+- [Benchmarks](#benchmarks)
+- [Current limitations](#current-limitations)
+- [Recommended next research iterations](#recommended-next-research-iterations)
 
 ## What is implemented
 
