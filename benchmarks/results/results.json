@@ -11,7 +11,7 @@
             "successes": 0,
             "success_rate": 0.0,
             "mean_score": 0.0,
-            "mean_used_tokens": 67.0,
+            "mean_used_tokens": 68.0,
             "mean_items": 1.0
           },
           {
@@ -20,7 +20,7 @@
             "successes": 1,
             "success_rate": 1.0,
             "mean_score": 1.0,
-            "mean_used_tokens": 140.0,
+            "mean_used_tokens": 136.0,
             "mean_items": 2.0
           },
           {
@@ -249,7 +249,7 @@
             "successes": 0,
             "success_rate": 0.0,
             "mean_score": 0.0,
-            "mean_used_tokens": 78.0,
+            "mean_used_tokens": 68.0,
             "mean_items": 1.0
           },
           {
@@ -487,7 +487,7 @@
             "successes": 0,
             "success_rate": 0.0,
             "mean_score": 0.0,
-            "mean_used_tokens": 77.0,
+            "mean_used_tokens": 68.0,
             "mean_items": 1.0
           },
           {
@@ -725,7 +725,7 @@
             "successes": 0,
             "success_rate": 0.0,
             "mean_score": 0.0,
-            "mean_used_tokens": 66.0,
+            "mean_used_tokens": 68.0,
             "mean_items": 1.0
           },
           {
@@ -734,7 +734,7 @@
             "successes": 0,
             "success_rate": 0.0,
             "mean_score": 0.0,
-            "mean_used_tokens": 140.0,
+            "mean_used_tokens": 137.0,
             "mean_items": 2.0
           },
           {
@@ -963,7 +963,7 @@
             "successes": 0,
             "success_rate": 0.0,
             "mean_score": 0.0,
-            "mean_used_tokens": 78.0,
+            "mean_used_tokens": 68.0,
             "mean_items": 1.0
           },
           {
@@ -1201,8 +1201,8 @@
             "successes": 0,
             "success_rate": 0.0,
             "mean_score": 0.0,
-            "mean_used_tokens": 74.0,
-            "mean_items": 1.0
+            "mean_used_tokens": 70.0,
+            "mean_items": 2.0
           },
           {
             "budget": 150,
@@ -1210,8 +1210,8 @@
             "successes": 0,
             "success_rate": 0.0,
             "mean_score": 0.0,
-            "mean_used_tokens": 141.0,
-            "mean_items": 3.0
+            "mean_used_tokens": 144.0,
+            "mean_items": 2.0
           },
           {
             "budget": 250,
@@ -1439,7 +1439,7 @@
             "successes": 0,
             "success_rate": 0.0,
             "mean_score": 0.0,
-            "mean_used_tokens": 68.0,
+            "mean_used_tokens": 79.0,
             "mean_items": 1.0
           },
           {
@@ -1448,7 +1448,7 @@
             "successes": 0,
             "success_rate": 0.0,
             "mean_score": 0.0,
-            "mean_used_tokens": 135.0,
+            "mean_used_tokens": 130.0,
             "mean_items": 2.0
           },
           {
@@ -1677,7 +1677,7 @@
             "successes": 0,
             "success_rate": 0.0,
             "mean_score": 0.0,
-            "mean_used_tokens": 72.0,
+            "mean_used_tokens": 76.0,
             "mean_items": 1.0
           },
           {
@@ -1686,8 +1686,8 @@
             "successes": 0,
             "success_rate": 0.0,
             "mean_score": 0.0,
-            "mean_used_tokens": 139.0,
-            "mean_items": 2.0
+            "mean_used_tokens": 147.0,
+            "mean_items": 3.0
           },
           {
             "budget": 250,
@@ -1915,8 +1915,8 @@
             "successes": 0,
             "success_rate": 0.0,
             "mean_score": 0.0,
-            "mean_used_tokens": 75.0,
-            "mean_items": 1.0
+            "mean_used_tokens": 70.0,
+            "mean_items": 2.0
           },
           {
             "budget": 150,
@@ -1924,7 +1924,7 @@
             "successes": 0,
             "success_rate": 0.0,
             "mean_score": 0.0,
-            "mean_used_tokens": 147.0,
+            "mean_used_tokens": 135.0,
             "mean_items": 2.0
           },
           {
@@ -2153,7 +2153,7 @@
             "successes": 0,
             "success_rate": 0.0,
             "mean_score": 0.0,
-            "mean_used_tokens": 74.0,
+            "mean_used_tokens": 76.0,
             "mean_items": 1.0
           },
           {
@@ -2162,8 +2162,8 @@
             "successes": 0,
             "success_rate": 0.0,
             "mean_score": 0.0,
-            "mean_used_tokens": 141.0,
-            "mean_items": 2.0
+            "mean_used_tokens": 147.0,
+            "mean_items": 3.0
           },
           {
             "budget": 250,
@@ -2391,8 +2391,8 @@
             "successes": 0,
             "success_rate": 0.0,
             "mean_score": 0.0,
-            "mean_used_tokens": 69.0,
-            "mean_items": 1.0
+            "mean_used_tokens": 70.0,
+            "mean_items": 2.0
           },
           {
             "budget": 150,
@@ -2400,7 +2400,7 @@
             "successes": 1,
             "success_rate": 1.0,
             "mean_score": 1.0,
-            "mean_used_tokens": 139.0,
+            "mean_used_tokens": 150.0,
             "mean_items": 2.0
           },
           {
@@ -2629,7 +2629,7 @@
             "successes": 0,
             "success_rate": 0.0,
             "mean_score": 0.0,
-            "mean_used_tokens": 77.0,
+            "mean_used_tokens": 67.0,
             "mean_items": 1.0
           },
           {
@@ -2638,8 +2638,8 @@
             "successes": 0,
             "success_rate": 0.0,
             "mean_score": 0.0,
-            "mean_used_tokens": 145.0,
-            "mean_items": 2.0
+            "mean_used_tokens": 148.0,
+            "mean_items": 3.0
           },
           {
             "budget": 250,
@@ -2867,7 +2867,7 @@
             "successes": 0,
             "success_rate": 0.0,
             "mean_score": 0.0,
-            "mean_used_tokens": 70.0,
+            "mean_used_tokens": 67.0,
             "mean_items": 1.0
           },
           {
@@ -2876,8 +2876,8 @@
             "successes": 1,
             "success_rate": 1.0,
             "mean_score": 1.0,
-            "mean_used_tokens": 139.0,
-            "mean_items": 1.0
+            "mean_used_tokens": 149.0,
+            "mean_items": 2.0
           },
           {
             "budget": 250,
@@ -3105,7 +3105,7 @@
             "successes": 0,
             "success_rate": 0.0,
             "mean_score": 0.0,
-            "mean_used_tokens": 72.0,
+            "mean_used_tokens": 67.0,
             "mean_items": 1.0
           },
           {
@@ -3114,7 +3114,7 @@
             "successes": 1,
             "success_rate": 1.0,
             "mean_score": 1.0,
-            "mean_used_tokens": 142.0,
+            "mean_used_tokens": 133.0,
             "mean_items": 1.0
           },
           {
@@ -3343,7 +3343,7 @@
             "successes": 0,
             "success_rate": 0.0,
             "mean_score": 0.0,
-            "mean_used_tokens": 75.0,
+            "mean_used_tokens": 73.0,
             "mean_items": 1.0
           },
           {
@@ -3352,8 +3352,8 @@
             "successes": 0,
             "success_rate": 0.0,
             "mean_score": 0.0,
-            "mean_used_tokens": 150.0,
-            "mean_items": 3.0
+            "mean_used_tokens": 141.0,
+            "mean_items": 2.0
           },
           {
             "budget": 250,

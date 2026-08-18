@@ -204,3 +204,62 @@ wording lexically matches `handler.py` but the actual constraint lives in
   reference in `LICENSE` that survived the earlier rebrand.
 - `python -m compileall` + `python -m unittest discover -s tests -v`:
   50/50 PASS (44 previous + 6 new `test_cli.py`).
+
+## 2026-08-18 (session 4): SVG charts, then two real bugs from SWE-bench Verified
+
+- Added `benchmarks/plot_results.py` (pure-stdlib SVG grouped-bar-chart
+  generator, no plotting dependency) and generated/embedded charts for
+  the overview and Phases 2/3/4a into both READMEs. Building the Phase 2
+  chart from live current data (rather than the frozen prose) surfaced
+  that `LEARNED_WEIGHTS_V1` now regresses 2 tasks against the current
+  full pipeline (its `dependency` weight predates the Phase 4a graph
+  feature and now suppresses it) -- documented in `benchmarks/README.md`;
+  the preset is opt-in only, so nothing shipping by default is affected.
+- Verified the two cached HuggingFace datasets on this machine
+  (`princeton-nlp/SWE-bench_Lite`, `princeton-nlp/SWE-bench_Verified`)
+  are official and complete: row counts match the published spec exactly
+  (Lite test=300/dev=23, Verified test=500), zero nulls in any key
+  field, zero duplicate `instance_id`s, valid HF cache symlinks, real
+  verifiable sample instances.
+- Ad hoc spot check (not yet a committed benchmark path): pulled 6 real
+  SWE-bench Verified instances, one per repo, downloaded each real repo
+  at the issue's `base_commit` via the GitHub codeload archive API,
+  ingested it, and checked whether `compile()` surfaces the files the
+  gold patch actually touches. 5/6 hit the oracle file at every budget
+  1000-16000; `pylint-dev/pylint-7080` hit 0/5, which traced to two real
+  bugs neither reachable by this repo's own short synthetic tasks -- see
+  `benchmarks/README.md` "2026-08-18: two bugs a real SWE-bench Verified
+  instance found" for the full root-cause writeup. Fixed both in
+  `context_compiler/compiler.py`:
+  - The task header embeds the task string verbatim and, unlike stored
+    items, never went through L0-L4 compression -- a verbose real task
+    (a GitHub issue with a pasted CLI log, 6510 tokens for pylint-7080)
+    could consume an entire small/medium budget on its own, leaving zero
+    tokens for actual context. Fixed via `CompilerConfig.
+    max_header_fraction` (default 0.3): the task text is now truncated
+    (via the existing `TokenCounter.truncate()`, so the omission is
+    marked, not silent) to at most that fraction of budget.
+  - The default candidate-retrieval limit (`max_candidates=120`) was a
+    flat constant, hard-truncating the TF-IDF-ranked pool *before*
+    scoring, independent of budget size -- a file ranked 181st of 2971
+    was therefore unreachable at *any* budget, confirmed by manually
+    raising `max_candidates` past 181 to recover it. Fixed by scaling the
+    default with budget: `max(config.max_candidates, budget //
+    config.candidate_tokens_estimate)`, `candidate_tokens_estimate`
+    (default 40) being the measured token cost of an L0 rendering.
+  - Verified no regression: re-ran the existing 15-task synthetic
+    benchmark before/after -- all 15 B95 numbers are byte-identical
+    (small budgets never hit the new floor). Re-ran the same 6 SWE-bench
+    instances after the fix: pylint-7080 now reaches the oracle file at
+    budget 8000/16000 (still correctly misses at 1000-4000, which
+    genuinely cannot fit it); the other 5 instances are unaffected.
+- New regression tests: `test_compiler.py::
+  test_verbose_task_text_does_not_starve_the_working_set`,
+  `test_compiler.py::test_default_candidate_limit_scales_with_budget`.
+- `python -m unittest discover -s tests -v`: 52/52 PASS (50 previous + 2
+  new).
+- Caveat carried into `benchmarks/README.md` verbatim: the 6-instance
+  check was hand-picked (smallest patch per repo, not a random/
+  representative sample) and run from a throwaway script, not a
+  committed benchmark path -- "5/6 hit the oracle file" should be read
+  as "not obviously broken on real data," not a validated success rate.

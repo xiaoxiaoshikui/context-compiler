@@ -41,6 +41,21 @@ class CompilerConfig:
     # Penalize tiny low-value pointers so the compiler does not fill the
     # context with a directory listing of everything it knows.
     admission_penalty: float = 0.018
+    # A real task string (e.g. a GitHub issue with a pasted stack trace or
+    # CLI log) can run to thousands of tokens. The header embeds it
+    # verbatim and isn't subject to the L0-L4 compression items get, so
+    # without a cap it can consume an entire small/medium budget on its
+    # own, leaving nothing for actual context -- found via a real
+    # SWE-bench instance (pylint-7080), never triggered by the short
+    # one-line synthetic benchmark tasks. Cap it to a fraction of budget
+    # so most of the budget is always reserved for the working set itself.
+    max_header_fraction: float = 0.3
+    # Divisor used to scale the default candidate-retrieval limit with
+    # budget (see `compile()`). ~41-49 tokens is the measured cost of an
+    # L0 (cheapest) rendering of a typical stored item, so this
+    # approximates "how many of the cheapest possible items could this
+    # budget even afford" as a floor on how deep retrieval should look.
+    candidate_tokens_estimate: int = 40
 
 
 _LEVEL_ORDER = [
@@ -115,12 +130,18 @@ class ContextCompiler:
     ) -> CompiledContext:
         if budget <= 0:
             raise ValueError("budget must be > 0")
-        candidate_limit = max_candidates or self.config.max_candidates
+        audit: list[str] = []
+        if max_candidates is not None:
+            candidate_limit = max_candidates
+        else:
+            candidate_limit = max(
+                self.config.max_candidates, budget // self.config.candidate_tokens_estimate
+            )
+        candidate_limit = min(candidate_limit, self.config.max_pool_size)
         reserve = self.config.reserve_tokens if reserve_tokens is None else reserve_tokens
         reserve = max(0, min(reserve, max(0, budget - 1)))
 
-        header = self._task_header(task)
-        header_tokens = self.counter.count(header)
+        header, header_tokens = self._bounded_task_header(task, budget, audit)
         available = max(0, budget - header_tokens - reserve)
 
         candidates = self._candidates(task, candidate_limit)
@@ -156,7 +177,6 @@ class ContextCompiler:
         # selected index in each item's variant list; -1 means absent.
         selected_idx: dict[str, int] = {item.id: -1 for item, _ in scored}
         used = 0
-        audit: list[str] = []
 
         # Force minimum representations for pinned items and high-risk constraints.
         forced = sorted(
@@ -331,6 +351,37 @@ class ContextCompiler:
             "items can be expanded by CTX id if your host exposes the expansion tool.\n"
             f"TASK: {task.strip()}"
         )
+
+    def _bounded_task_header(self, task: str, budget: int, audit: list[str]) -> tuple[str, int]:
+        """Build the task header, capped to `max_header_fraction` of budget.
+
+        The header embeds the task string verbatim -- it isn't one of the
+        stored items, so it never goes through the L0-L4 compression those
+        get. A verbose real task (a GitHub issue with a pasted stack trace,
+        say) can otherwise cost more tokens than the whole budget, leaving
+        nothing for the actual working set. Truncating the task text itself
+        (via the same TokenCounter.truncate used for the final defensive
+        hard-cap) keeps a hard floor of budget available for real context,
+        and truncate() already appends a visible "…" marker so the
+        omission isn't silent.
+        """
+        header = self._task_header(task)
+        header_tokens = self.counter.count(header)
+        max_header_tokens = max(1, int(budget * self.config.max_header_fraction))
+        if header_tokens <= max_header_tokens:
+            return header, header_tokens
+
+        preamble_tokens = self.counter.count(self._task_header(""))
+        task_budget = max(0, max_header_tokens - preamble_tokens)
+        truncated_task = self.counter.truncate(task.strip(), task_budget)
+        header = self._task_header(truncated_task)
+        header_tokens = self.counter.count(header)
+        audit.append(
+            f"task text truncated to fit within {max_header_tokens} tokens "
+            f"({self.config.max_header_fraction:.0%} of budget) -- "
+            f"header alone would otherwise have cost {self.counter.count(self._task_header(task))}"
+        )
+        return header, header_tokens
 
     @staticmethod
     def _best_idx_at_or_below(variants: list[RenderedVariant], level: RenderLevel) -> int:

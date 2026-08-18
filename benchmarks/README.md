@@ -372,3 +372,86 @@ regressed on 0, unchanged on the rest.
 (This is also the feature that Phase 2's `LEARNED_WEIGHTS_V1` preset now
 undermines on exactly these two non-`dependency_graph` tasks — see the
 update at the end of the Phase 2 section above.)
+
+## 2026-08-18: two bugs a real SWE-bench Verified instance found
+
+Every task in this file's benchmark is synthetic -- a short, hand-written
+one-liner against a small repo we built. That's a structural blind spot:
+some real-world failure modes literally cannot occur in a task string
+designed to fit one sentence, or a repo designed to fit a handful of
+files. As a spot check (not yet a wired-in, committed benchmark path --
+see caveat below), we pulled 6 real instances from the official
+`princeton-nlp/SWE-bench_Verified` dataset (300/500 test rows spot-
+checked for schema/row-count/null integrity against the published specs
+before trusting it), one per repo (`pallets/flask`, `psf/requests`,
+`pytest-dev/pytest`, `pylint-dev/pylint`, `astropy/astropy`,
+`django/django`), downloaded each real repo at the issue's `base_commit`,
+ingested it, and checked whether `compile()` surfaced the files the
+issue's gold patch actually touches ("oracle files") at budgets from
+1000 to 16000 tokens.
+
+5/6 instances hit the oracle file at every budget tested, on real,
+messy, multi-thousand-file repositories (`django/django` ingested 3956
+files in 15s with zero ingest errors). `pylint-dev/pylint-7080` hit 0/5 --
+tracing why surfaced two real bugs, neither reachable by this repo's
+own 15 short synthetic tasks:
+
+1. **A verbose task can consume the whole budget on its own.** The
+   `[CONTEXT-COMPILER]... TASK: <text>` header embeds the task string
+   verbatim; unlike stored items, it never goes through L0-L4
+   compression. Real GitHub issues often paste a CLI log or stack trace
+   -- pylint-7080's `problem_statement` alone was 6510 tokens. At budget
+   1000/2000/4000, the header alone exceeded the budget, so `compile()`
+   selected **zero** context items at every one of those budgets, and the
+   final defensive hard-cap truncated the raw task text itself rather
+   than any real working set.
+2. **The default candidate limit hard-truncated before scoring, with no
+   relationship to the budget.** `pylint/lint/expand_modules.py` -- the
+   file the gold patch actually touches -- ranked 181st by TF-IDF out of
+   2971 ingested files (the issue's pasted lint-checker output shares far
+   more vocabulary with other checker files than with the actual fix
+   location). `compile()`'s default `max_candidates=120` truncated the
+   ranked pool before any scoring ran, so this file was unreachable **at
+   any budget**, including 16000 tokens -- confirmed by manually raising
+   `max_candidates` past 181, which recovered it immediately.
+
+**Fix, in `context_compiler/compiler.py`:**
+
+- `CompilerConfig.max_header_fraction` (default `0.3`) caps the task
+  header to that fraction of budget; if the raw task text would exceed
+  it, `_bounded_task_header()` truncates the task text itself (via the
+  same `TokenCounter.truncate()` already used for the final hard-cap, so
+  the omission is marked with a visible `…`) and logs an audit entry.
+  Most of the budget is now always available for real context,
+  regardless of how verbose the task string is.
+- The default candidate limit is no longer the flat `max_candidates`
+  constant: `max(config.max_candidates, budget // config.
+  candidate_tokens_estimate)`, capped at `max_pool_size`.
+  `candidate_tokens_estimate` (default `40`) is the measured cost of an
+  L0 (cheapest) rendering of a typical item -- an estimate of "how many
+  of the cheapest possible items this budget could even afford," used as
+  a floor on how deep retrieval should look. A caller-supplied
+  `max_candidates` is still respected exactly as given. Small budgets
+  (`budget // 40 < 120`, true of every budget in this repo's own 15-task
+  sweep) are unaffected -- confirmed by re-running the full sweep before
+  and after: all 15 B95 numbers are byte-identical.
+
+Re-running the same 6 SWE-bench instances after the fix: pylint-7080
+reaches the oracle file at budget 8000 and 16000 (candidate limit widens
+past rank 181 there), still misses at 1000/2000/4000 -- a budget that
+small genuinely cannot fit the file at its rank, which is the correct,
+honest outcome, not a bug. The other 5 instances are unaffected (still
+100% at every budget). Regression tests:
+`test_compiler.py::test_verbose_task_text_does_not_starve_the_working_set`,
+`test_compiler.py::test_default_candidate_limit_scales_with_budget`.
+
+**Caveat, stated plainly:** this was an ad hoc spot check (6 hand-picked
+instances, one per repo, chosen by smallest patch size per repo -- not a
+random or representative sample), run from a throwaway script, not a
+committed, re-runnable benchmark path in this repo yet. Treat "5/6 hit
+the oracle file" as "the pipeline isn't obviously broken on real data,"
+not as a validated success rate. A proper SWE-bench integration (a
+committed adapter, a real sample size, and ideally execution-based
+pass/fail via the dataset's own `FAIL_TO_PASS`/`PASS_TO_PASS` tests
+rather than gold-patch-file-overlap as the success proxy) is future work,
+not something this entry claims to be.

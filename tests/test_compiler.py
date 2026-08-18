@@ -105,6 +105,87 @@ class CompilerTests(unittest.TestCase):
         outputs = {compile_once() for _ in range(15)}
         self.assertEqual(len(outputs), 1, f"compile() shape varied across ingests: {outputs}")
 
+    def test_verbose_task_text_does_not_starve_the_working_set(self):
+        # Regression test for a real bug found by running a real SWE-bench
+        # Verified instance (pylint-dev/pylint-7080) through the pipeline:
+        # a genuine GitHub issue can paste a long CLI/log dump into its body
+        # (thousands of tokens). The header embeds the task verbatim and
+        # isn't compressed the way stored items are, so at a small-to-medium
+        # budget the header alone consumed the *entire* budget, leaving zero
+        # tokens -- and zero selections -- for the actual working set. The
+        # 15 short, one-line synthetic benchmark tasks never exercised this
+        # path. compile() must now always reserve most of the budget for
+        # real context regardless of how verbose the task text is.
+        with tempfile.TemporaryDirectory() as tmp:
+            store = ContextStore(Path(tmp) / "ctx.db")
+            store.add(
+                title="cache.py",
+                source="cache.py",
+                kind="code",
+                content="TTL_SECONDS = 30\ndef get(key): ...",
+                importance=0.8,
+            )
+            huge_task = "Investigate stale cached prices.\n" + (
+                "irrelevant pasted log line with unique noise words " * 400
+            )
+            compiler = ContextCompiler(store)
+            result = compiler.compile(huge_task, budget=500)
+            self.assertLessEqual(result.used_tokens, 500)
+            self.assertGreater(
+                len(result.selections), 0, "verbose task text left no room for any context item"
+            )
+            self.assertTrue(
+                any("truncated" in a for a in result.audit),
+                "expected an audit entry noting the task text was truncated",
+            )
+
+    def test_default_candidate_limit_scales_with_budget(self):
+        # Regression test for a second bug found via the same real SWE-bench
+        # instance: retrieval hard-truncated to the top `max_candidates`
+        # (120) *before* scoring, independent of how large the budget was.
+        # A real fix file that TF-IDF ranked 181st out of ~3000 files was
+        # therefore permanently unreachable at *any* budget, not just small
+        # ones. The default candidate limit must now grow with budget so a
+        # generous budget gets a deeper look, while small-budget behavior
+        # (where 120 candidates was already more than could ever be
+        # afforded) stays exactly as before.
+        with tempfile.TemporaryDirectory() as tmp:
+            store = ContextStore(Path(tmp) / "ctx.db")
+            task = "investigate the timeout retry bug in the payment gateway"
+            for i in range(130):
+                store.add(
+                    title=f"filler-{i:03d}.py",
+                    source=f"aaa_filler_{i:03d}.py",
+                    kind="code",
+                    content="timeout retry bug payment gateway " * 10,
+                    importance=0.5,
+                )
+            target = store.add(
+                title="unrelated-but-important.py",
+                source="zzz_target.py",
+                kind="code",
+                content="widget rendering color palette layout spacing",
+                importance=0.9,
+                omission_risk=0.6,
+            )
+            compiler = ContextCompiler(store)
+
+            small = compiler.compile(task, budget=2000)  # 2000 // 40 == 50 < 120, unchanged floor
+            small_considered = {s.item_id for s in small.selections} | set(small.omitted_ids)
+            self.assertNotIn(
+                target.id,
+                small_considered,
+                "target should be past the default candidate cutoff at a small budget",
+            )
+
+            large = compiler.compile(task, budget=6000)  # 6000 // 40 == 150 > 130
+            large_considered = {s.item_id for s in large.selections} | set(large.omitted_ids)
+            self.assertIn(
+                target.id,
+                large_considered,
+                "a larger budget should widen the candidate pool enough to reach the target",
+            )
+
     def test_reversible_expand(self):
         with tempfile.TemporaryDirectory() as tmp:
             store = ContextStore(Path(tmp) / "ctx.db")
