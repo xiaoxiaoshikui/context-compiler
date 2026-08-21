@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="358" viewBox="0 0 860 358" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+<rect width="860" height="358" fill="#ffffff"/>
+<text x="200" y="27" font-size="16.5" font-weight="600" fill="#111827">Oracle ceiling vs Random floor vs Ours, at a fixed 8,000-token budget</text>
+<text x="200" y="46" font-size="12" fill="#4b5563">Same 6 tasks, same budget, same model -- only how the context was chosen differs. Random/Ours run twice</text>
+<text x="200" y="62" font-size="12" fill="#4b5563">(repeats shown as separate bars; a real model is stochastic, n=2 is not enough to separate luck from</text>
+<text x="200" y="78" font-size="12" fill="#4b5563">signal). Higher = better.</text>
+<rect x="200" y="104" width="12" height="12" rx="2" fill="#2563eb"/>
+<text x="217" y="114" font-size="12" fill="#374151">resolved</text>
+<line x1="200.0" y1="116" x2="200.0" y2="312" stroke="#eef0f2" stroke-width="1"/>
+<text x="200.0" y="330" font-size="11" fill="#6b7280" text-anchor="middle">0</text>
+<line x1="314.0" y1="116" x2="314.0" y2="312" stroke="#eef0f2" stroke-width="1"/>
+<text x="314.0" y="330" font-size="11" fill="#6b7280" text-anchor="middle">1</text>
+<line x1="428.0" y1="116" x2="428.0" y2="312" stroke="#eef0f2" stroke-width="1"/>
+<text x="428.0" y="330" font-size="11" fill="#6b7280" text-anchor="middle">2</text>
+<line x1="542.0" y1="116" x2="542.0" y2="312" stroke="#eef0f2" stroke-width="1"/>
+<text x="542.0" y="330" font-size="11" fill="#6b7280" text-anchor="middle">3</text>
+<line x1="656.0" y1="116" x2="656.0" y2="312" stroke="#eef0f2" stroke-width="1"/>
+<text x="656.0" y="330" font-size="11" fill="#6b7280" text-anchor="middle">5</text>
+<line x1="770.0" y1="116" x2="770.0" y2="312" stroke="#eef0f2" stroke-width="1"/>
+<text x="770.0" y="330" font-size="11" fill="#6b7280" text-anchor="middle">6</text>
+<text x="485.0" y="352" font-size="11.5" fill="#6b7280" text-anchor="middle">instances resolved (of 6)</text>
+<text x="188" y="145.0" font-size="12" fill="#111827" text-anchor="end">Oracle (ceiling)</text>
+<rect x="200" y="128.0" width="495.7" height="19" rx="3" fill="#2563eb"/>
+<text x="701.7" y="141.5" font-size="11.5" fill="#111827">5</text>
+<line x1="200" y1="158" x2="770" y2="158" stroke="#f3f4f6" stroke-width="1"/>
+<text x="188" y="183.0" font-size="12" fill="#111827" text-anchor="end">Random (floor) r0</text>
+<rect x="200" y="166.0" width="2.0" height="19" rx="3" fill="#2563eb"/>
+<text x="208.0" y="179.5" font-size="11.5" fill="#111827">0</text>
+<line x1="200" y1="196" x2="770" y2="196" stroke="#f3f4f6" stroke-width="1"/>
+<text x="188" y="221.0" font-size="12" fill="#111827" text-anchor="end">Random (floor) r1</text>
+<rect x="200" y="204.0" width="2.0" height="19" rx="3" fill="#2563eb"/>
+<text x="208.0" y="217.5" font-size="11.5" fill="#111827">0</text>
+<line x1="200" y1="234" x2="770" y2="234" stroke="#f3f4f6" stroke-width="1"/>
+<text x="188" y="259.0" font-size="12" fill="#111827" text-anchor="end">Ours r0</text>
+<rect x="200" y="242.0" width="2.0" height="19" rx="3" fill="#2563eb"/>
+<text x="208.0" y="255.5" font-size="11.5" fill="#111827">0</text>
+<line x1="200" y1="272" x2="770" y2="272" stroke="#f3f4f6" stroke-width="1"/>
+<text x="188" y="297.0" font-size="12" fill="#111827" text-anchor="end">Ours r1</text>
+<rect x="200" y="280.0" width="99.1" height="19" rx="3" fill="#2563eb"/>
+<text x="305.1" y="293.5" font-size="11.5" fill="#111827">1</text>
+<line x1="200" y1="310" x2="770" y2="310" stroke="#f3f4f6" stroke-width="1"/>
+</svg>

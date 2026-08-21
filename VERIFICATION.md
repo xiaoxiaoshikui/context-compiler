@@ -263,3 +263,69 @@ wording lexically matches `handler.py` but the actual constraint lives in
   representative sample) and run from a throwaway script, not a
   committed benchmark path -- "5/6 hit the oracle file" should be read
   as "not obviously broken on real data," not a validated success rate.
+
+## 2026-08-21 (session 5): real-execution SWE-bench evaluation
+
+- Added `benchmarks/real_eval.py`: a committed, re-runnable real-execution
+  harness (the file-presence spot check above was explicitly future work
+  until now). For a real SWE-bench Verified instance it downloads the
+  repo at `base_commit`, ingests it, builds context under a budget via
+  one of three policies (`oracle`/`random`/`ours`), generates a real
+  patch with `deepseek-v4-pro`, and verifies it against the instance's
+  real hidden tests via the official `swebench` (3.x) Docker harness.
+  Requires a dedicated venv (`pyarrow`, `swebench>=3,<4`), Docker, and a
+  `DEEPSEEK_API_KEY` -- none of this is a default/core dependency, same
+  pattern as `llm_judge_eval.py`.
+- Patch mechanism: whole-function rewrite, located deterministically via
+  `ast` (by function name, not text similarity), not SEARCH/REPLACE.
+  Two real corruption bugs were found and fixed on the way to this: a
+  missing-trailing-newline splice bug that glued two statements onto one
+  line (`SyntaxError`), and a fuzzy-match boundary bug that left an
+  orphaned line mid-block (`IndentationError`) -- both root-caused to the
+  same thing (an arbitrary code snippet has no guaranteed-safe boundary
+  to fuzzy-match and splice in whitespace-sensitive code); whole-function
+  boundaries via `ast` are unambiguous and eliminated both. Full
+  root-cause writeup in `benchmarks/README.md`.
+- Real findings, 6 tasks (flask/requests/pytest/pylint/astropy/django),
+  real Docker-verified pass/fail:
+  - Oracle budget sweep (ground-truth-relevant context, never the gold
+    patch itself): 2/6 resolved at 1k tokens, 4/6 at 4k, 5/6 at 8k, 4/6
+    at 16k (one run per budget; the 16k dip is read as single-run noise
+    from `temperature=0.2`, not evidence of a non-monotonic curve) --
+    real evidence a sufficient-context region exists for at least some
+    real tasks, on top of the earlier file-presence-only result.
+  - At the fixed 8k-token budget where the oracle curve plateaus: oracle
+    5/6, random (floor) 0/6 both repeats, ours 0/6 then 1/6. Reported as
+    measured -- `context_compiler`'s current selection is not yet
+    meaningfully distinguishable from random ordering on this small
+    real sample, far from the oracle ceiling. n=6 tasks / n=2 repeats is
+    not enough for a precise gap, but the direction is real and is new
+    information the earlier file-presence proxy could not have shown.
+- Two infrastructure failure modes found and fixed, documented in
+  `benchmarks/README.md` for future runs: (1) running policies
+  concurrently (3 processes at once) broke DNS resolution entirely
+  (`gaierror`) and defeated the request-level hard timeout, since a
+  thread stuck in a non-cancelable `getaddrinfo()` call can't be
+  cancelled by `ThreadPoolExecutor.result(timeout=...)` -- fixed by
+  running conditions serially; (2) `deepseek-v4-pro` is a reasoning
+  model that can spend an entire `max_tokens` budget "reasoning" about
+  incoherent (`random`-policy) context and emit zero actual answer --
+  confirmed directly (`reasoning_tokens: 12000`, `content: ""` at
+  `max_tokens=12000`); fixed by raising `max_tokens` to 24000, not by
+  waiting longer.
+- Added `benchmarks/plot_real_eval.py` (reuses `plot_results.py`'s
+  SVG bar-chart helper) -- `real_eval_oracle_sweep.svg` and
+  `real_eval_method_comparison.svg`, embedded in `benchmarks/README.md`.
+- Results committed at `benchmarks/results/real_eval_results.json`
+  (8 conditions: the 4-point oracle sweep plus 2 repeats each of
+  random/ours at 8k -- earlier attempts that hit the DNS-storm and
+  reasoning-exhaustion failures above, before both were fixed, were
+  removed rather than kept as misleading 0%-signal data).
+- `python -m unittest discover -s tests -v`: 52/52 PASS (no core-package
+  changes this session; `real_eval.py` is a benchmarks-only script and
+  isn't covered by the core test suite, same as `llm_judge_eval.py`).
+- Not done yet, noted honestly in `benchmarks/README.md`: a RAG
+  (embedding-retrieval) baseline (attempted, blocked by the same
+  DeepSeek reliability issues); repeated runs at a sample size large
+  enough for real statistical confidence; Experiment 4 (per-item
+  deletion testing to find each task's empirical MSC).

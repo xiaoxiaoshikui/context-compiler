@@ -435,6 +435,16 @@ documents a real nondeterminism bug in `compile()` that this benchmarking
 work found and fixed (nonstable candidate ordering plus a token-count
 side effect of randomly-generated item ids) — see "Phase 4a" there.
 
+`benchmarks/real_eval.py` goes further: real SWE-bench Verified instances,
+real patches from a real model, real Docker-verified pass/fail via the
+official `swebench` harness — not a keyword-check proxy. It found real,
+uncomfortable evidence: on a small sample, `ours` is not yet
+meaningfully distinguishable from randomly ordering the repo (0-1/6
+resolved vs. random's 0/6, both far from the oracle ceiling's 5/6 at the
+same budget). See "does minimum sufficient context exist?" in
+`benchmarks/README.md` for the full numbers, the patch-mechanism bugs
+found along the way, and the infrastructure caveats.
+
 ## Current limitations
 
 This package intentionally makes the research hypothesis inspectable. It does **not** pretend that the current heuristic scorer solves context sufficiency.
@@ -481,12 +491,22 @@ These are intentional extension points rather than hidden assumptions.
    `ours` against `full` and `random` baselines with a keyword-check
    evaluator (plus an opt-in, paid LLM-judge evaluator) — see
    `benchmarks/README.md` for what it does and does not yet prove.
+   *Also started, on real tasks:* `benchmarks/real_eval.py` runs real
+   SWE-bench Verified instances end to end (real model, real Docker
+   -verified tests) — 6 instances so far, not yet the 30-100 scale here.
 2. Compare `Full`, `Random`, `Lexical/FTS`, `Embedding RAG`, `Ours`, and
    `Oracle` under equal budgets. *Started:* `benchmarks/run.py` now runs
    `Full`, `Random`, `Ours` (TF-IDF by default), and `Ours` with the
    original FTS retriever (`--retriever fts`) under equal budgets, plus
-   the `Oracle` token-cost reference point. `Embedding RAG` is still open.
+   the `Oracle` token-cost reference point. *Also started, with real
+   execution instead of a proxy evaluator:* `benchmarks/real_eval.py`
+   compares `Oracle`/`Random`/`Ours` with real Docker-verified pass/fail
+   — see the finding above. `Embedding RAG` is attempted but not yet
+   reliable in either harness; `Lexical/FTS` is `run.py --retriever fts`.
 3. Record task success, lifecycle input tokens, context misses and latency.
+   *Started:* `real_eval.py` records per-call token usage and real
+   pass/fail; lifecycle-total tokens (across retries/tool calls) and
+   context-miss tracking are still open.
 4. Estimate `B95`: smallest budget reaching 95% of full-context baseline quality.
 5. Run deletion tests on successful trajectories to generate labels for
    context marginal value. *Started:* see item 2 above.
