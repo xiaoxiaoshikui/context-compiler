@@ -20,6 +20,7 @@ This repository is a research/runtime substrate for that idea. The core works wi
 - **Pluggable retrieval, scoring, and dependency resolution** — swap the default TF-IDF retriever, the hand-tuned scoring weights, or use the real cross-file dependency graph, each behind a small documented interface.
 - **CLI, an HTTP API with no dependencies, and an optional MCP v2 server** ship in the same package.
 - **A benchmark harness with reproducible before/after numbers** for every algorithmic change in this repo's history — including a real determinism bug the benchmarking work found and fixed. See [Benchmarks](#benchmarks).
+- **Validated against real SWE-bench Verified instances with real Docker-verified test execution** — not a keyword-matching proxy. The results are reported honestly, including where this compiler currently falls short of an oracle ceiling. See [Real-execution evaluation](#benchmarks).
 
 ## 30-second demo
 
@@ -407,12 +408,81 @@ python -m unittest discover -s tests -v
 
 ## Benchmarks
 
-`benchmarks/` contains a first, small slice of the benchmark harness
-described below: 15 synthetic tasks across five task shapes, each compiled
-under a budget sweep with `ours` (this compiler) against two naive
-baselines (`full`, `random`) plus an Oracle reference point. An optional
-`--evaluator llm_judge` mode (real Anthropic API calls, opt-in, costs
-money) is a first step past pure keyword matching,
+Two benchmarks live in this repo, deliberately kept distinct: a fast
+synthetic suite for iterating on the algorithm (proxy evaluator, free,
+runs in CI-friendly seconds), and a slow real-execution suite for
+answering "does any of this actually work" (real model, real Docker
+-verified tests, costs real money). Neither substitutes for the other —
+see `benchmarks/README.md` for the full methodology behind both.
+
+### Real-execution evaluation: does minimum sufficient context exist?
+
+`benchmarks/real_eval.py` downloads real SWE-bench Verified instances,
+generates a real patch with a real model, and checks it against the
+instance's real hidden tests via the official `swebench` Docker harness —
+execution-based pass/fail, not a keyword-check proxy.
+
+**Experiment 1 — an Oracle budget sweep** (context limited to the files
+the gold patch actually touches, never the patch itself, across an
+increasing token budget) asks the most basic question first: is there
+even a token budget past which more context stops helping?
+
+![Oracle budget sweep: instances resolved per budget](benchmarks/charts/real_eval_oracle_sweep.svg)
+
+| Budget | Resolved (of 6) |
+|---|---|
+| 1,000 tokens | 2 |
+| 4,000 tokens | 4 |
+| 8,000 tokens | 5 |
+| 16,000 tokens | 4 |
+
+Yes — on this sample, resolution rate stops improving past ~8,000 tokens.
+That's real evidence for the hypothesis this whole repo is built on, not
+just an assumption.
+
+**Experiment 2 — at that same 8,000-token budget**, does `ours` (this
+compiler's actual TF-IDF selection + L0-L4 compression) get anywhere
+close to the oracle ceiling, compared to a random-file-ordering floor?
+
+![Oracle ceiling vs Random floor vs Ours at 8,000 tokens](benchmarks/charts/real_eval_method_comparison.svg)
+
+| Policy | Run 1 | Run 2 |
+|---|---|---|
+| **Oracle** (ceiling) | 5 / 6 | — |
+| **Random** (floor) | 0 / 6 | 0 / 6 |
+| **Ours** | 0 / 6 | 1 / 6 |
+
+Reported exactly as measured, including the parts that don't flatter this
+project: at this sample size, `ours` is not yet meaningfully
+distinguishable from randomly ordering the repository — nowhere near the
+oracle ceiling. n=6 tasks / n=2 repeats isn't enough to call this a
+precise gap, but the direction is real, and it's the honest answer to
+"is this useful" rather than the weaker "did it find the right file"
+proxy the file-selection spot check below measures. Closing this gap is
+the actual open problem — see `benchmarks/README.md` for the full
+writeup, including two real patch-corruption bugs found and fixed along
+the way (compressed context breaks exact-match patch snippets; the fix
+was whole-function rewrite via `ast`, not text matching) and the
+infrastructure failure modes hit running it (concurrent runs silently
+broke DNS resolution; a reasoning model can burn its whole token budget
+"thinking" about incoherent context and answer nothing at all).
+
+```bash
+python3 -m venv .venv_realeval && source .venv_realeval/bin/activate
+pip install -e . pyarrow "swebench>=3,<4"   # + Docker running, DEEPSEEK_API_KEY set
+python benchmarks/real_eval.py --instances pallets__flask-5014 ... \
+  --policies oracle --budgets 1000 4000 8000 16000 --repeats 1 --tag mysweep
+```
+
+### Synthetic benchmark: fast, free, proxy-scored
+
+15 synthetic tasks across five task shapes, each compiled under a budget
+sweep with `ours` against two naive baselines (`full`, `random`) plus an
+Oracle token-cost reference point. Success is a keyword-conjunction check
+against the compiled text — "is the right fact present," not "did a
+patch pass" — which is exactly the gap the real-execution evaluation
+above closes. An optional `--evaluator llm_judge` mode (real Anthropic
+API calls, opt-in, costs money) is a step past pure keyword matching,
 `benchmarks/learn_weights.py` fits an alternative scoring-weights preset
 from deletion-test labels (`run.py --weights learned`), and
 `context_compiler.graph` resolves real cross-file dependency edges that
@@ -433,17 +503,11 @@ it is explicitly a starting point (15 tasks, mostly a keyword-check
 evaluator), not the 30-100 task benchmark recommended below. It also
 documents a real nondeterminism bug in `compile()` that this benchmarking
 work found and fixed (nonstable candidate ordering plus a token-count
-side effect of randomly-generated item ids) — see "Phase 4a" there.
-
-`benchmarks/real_eval.py` goes further: real SWE-bench Verified instances,
-real patches from a real model, real Docker-verified pass/fail via the
-official `swebench` harness — not a keyword-check proxy. It found real,
-uncomfortable evidence: on a small sample, `ours` is not yet
-meaningfully distinguishable from randomly ordering the repo (0-1/6
-resolved vs. random's 0/6, both far from the oracle ceiling's 5/6 at the
-same budget). See "does minimum sufficient context exist?" in
-`benchmarks/README.md` for the full numbers, the patch-mechanism bugs
-found along the way, and the infrastructure caveats.
+side effect of randomly-generated item ids) — see "Phase 4a" there, and
+a separate real SWE-bench file-selection spot check (5/6 oracle-file
+hit rate before the real-execution study above existed) that found and
+fixed two more real bugs — see "two bugs a real SWE-bench Verified
+instance found" there.
 
 ## Current limitations
 
