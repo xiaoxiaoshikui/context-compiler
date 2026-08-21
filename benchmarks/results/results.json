@@ -267,7 +267,7 @@
             "successes": 1,
             "success_rate": 1.0,
             "mean_score": 1.0,
-            "mean_used_tokens": 240.0,
+            "mean_used_tokens": 236.0,
             "mean_items": 3.0
           },
           {
@@ -276,8 +276,8 @@
             "successes": 1,
             "success_rate": 1.0,
             "mean_score": 1.0,
-            "mean_used_tokens": 387.0,
-            "mean_items": 4.0
+            "mean_used_tokens": 400.0,
+            "mean_items": 3.0
           },
           {
             "budget": 700,
@@ -505,8 +505,8 @@
             "successes": 1,
             "success_rate": 1.0,
             "mean_score": 1.0,
-            "mean_used_tokens": 244.0,
-            "mean_items": 2.0
+            "mean_used_tokens": 243.0,
+            "mean_items": 3.0
           },
           {
             "budget": 400,
@@ -1210,8 +1210,8 @@
             "successes": 0,
             "success_rate": 0.0,
             "mean_score": 0.0,
-            "mean_used_tokens": 144.0,
-            "mean_items": 2.0
+            "mean_used_tokens": 148.0,
+            "mean_items": 1.0
           },
           {
             "budget": 250,
@@ -1445,10 +1445,10 @@
           {
             "budget": 150,
             "runs": 1,
-            "successes": 0,
-            "success_rate": 0.0,
-            "mean_score": 0.0,
-            "mean_used_tokens": 130.0,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 142.0,
             "mean_items": 2.0
           },
           {
@@ -1457,7 +1457,7 @@
             "successes": 1,
             "success_rate": 1.0,
             "mean_score": 1.0,
-            "mean_used_tokens": 218.0,
+            "mean_used_tokens": 246.0,
             "mean_items": 4.0
           },
           {
@@ -1506,7 +1506,7 @@
             "mean_items": 4.0
           }
         ],
-        "b95": 250
+        "b95": 150
       },
       "full": {
         "points": [
@@ -1933,7 +1933,7 @@
             "successes": 0,
             "success_rate": 0.0,
             "mean_score": 0.0,
-            "mean_used_tokens": 222.0,
+            "mean_used_tokens": 242.0,
             "mean_items": 3.0
           },
           {
@@ -1942,8 +1942,8 @@
             "successes": 1,
             "success_rate": 1.0,
             "mean_score": 1.0,
-            "mean_used_tokens": 382.0,
-            "mean_items": 4.0
+            "mean_used_tokens": 388.0,
+            "mean_items": 3.0
           },
           {
             "budget": 700,
@@ -2171,8 +2171,8 @@
             "successes": 0,
             "success_rate": 0.0,
             "mean_score": 0.0,
-            "mean_used_tokens": 229.0,
-            "mean_items": 3.0
+            "mean_used_tokens": 246.0,
+            "mean_items": 4.0
           },
           {
             "budget": 400,
@@ -2180,7 +2180,7 @@
             "successes": 1,
             "success_rate": 1.0,
             "mean_score": 1.0,
-            "mean_used_tokens": 367.0,
+            "mean_used_tokens": 391.0,
             "mean_items": 5.0
           },
           {
@@ -2885,8 +2885,8 @@
             "successes": 1,
             "success_rate": 1.0,
             "mean_score": 1.0,
-            "mean_used_tokens": 233.0,
-            "mean_items": 3.0
+            "mean_used_tokens": 250.0,
+            "mean_items": 4.0
           },
           {
             "budget": 400,
@@ -3114,8 +3114,8 @@
             "successes": 1,
             "success_rate": 1.0,
             "mean_score": 1.0,
-            "mean_used_tokens": 133.0,
-            "mean_items": 1.0
+            "mean_used_tokens": 150.0,
+            "mean_items": 2.0
           },
           {
             "budget": 250,
@@ -3370,8 +3370,8 @@
             "successes": 1,
             "success_rate": 1.0,
             "mean_score": 1.0,
-            "mean_used_tokens": 374.0,
-            "mean_items": 5.0
+            "mean_used_tokens": 391.0,
+            "mean_items": 6.0
           },
           {
             "budget": 700,

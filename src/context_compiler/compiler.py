@@ -56,6 +56,20 @@ class CompilerConfig:
     # approximates "how many of the cheapest possible items could this
     # budget even afford" as a floor on how deep retrieval should look.
     candidate_tokens_estimate: int = 40
+    # How many of the highest-scoring (non-pinned, non-constraint)
+    # candidates are forced to full text (L4) before the greedy allocator
+    # spends anything on breadth. Found via a real SWE-bench instance: the
+    # allocator will happily spend budget on many cheap L0/L1 pointers
+    # (e.g. a dozen near-empty test-file stubs) while the one file that
+    # actually needs editing sits at L2 -- a symbol list plus scattered
+    # snippets, not the file's real current text. Asking a model to rewrite
+    # a whole function from that L2 view (see benchmarks/real_eval.py's
+    # patch mechanism) silently drops code it never saw, because it's
+    # reconstructing from a lossy summary rather than editing real text.
+    # Forcing full text on a small number of top candidates trades some of
+    # that breadth for the precision an actual edit needs. 0 disables this
+    # and restores pre-2026-08-22 behavior.
+    top_k_full_text: int = 3
 
 
 _LEVEL_ORDER = [
@@ -178,13 +192,28 @@ class ContextCompiler:
         selected_idx: dict[str, int] = {item.id: -1 for item, _ in scored}
         used = 0
 
-        # Force minimum representations for pinned items and high-risk constraints.
+        # Force minimum representations for pinned items, high-risk
+        # constraints, and the top-K highest-scoring candidates overall
+        # (full text -- see CompilerConfig.top_k_full_text).
+        top_k_ids: set[str] = {
+            item.id
+            for item, _ in sorted(scored, key=lambda x: -x[1].total)[: self.config.top_k_full_text]
+        }
         forced = sorted(
-            [pair for pair in scored if pair[0].pinned or pair[0].kind is ContextKind.CONSTRAINT],
-            key=lambda x: (not x[0].pinned, -x[1].total),
+            [
+                pair
+                for pair in scored
+                if pair[0].pinned or pair[0].kind is ContextKind.CONSTRAINT or pair[0].id in top_k_ids
+            ],
+            key=lambda x: (not x[0].pinned, x[0].id not in top_k_ids, -x[1].total),
         )
         for item, b in forced:
-            min_level = self.config.pinned_min_level if item.pinned else self.config.constraint_min_level
+            if item.pinned:
+                min_level = self.config.pinned_min_level
+            elif item.kind is ContextKind.CONSTRAINT:
+                min_level = self.config.constraint_min_level
+            else:
+                min_level = RenderLevel.L4
             idx = self._best_idx_at_or_below(variants[item.id], min_level)
             if idx < 0:
                 continue

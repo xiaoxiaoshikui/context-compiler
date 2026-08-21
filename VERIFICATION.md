@@ -329,3 +329,48 @@ wording lexically matches `handler.py` but the actual constraint lives in
   DeepSeek reliability issues); repeated runs at a sample size large
   enough for real statistical confidence; Experiment 4 (per-item
   deletion testing to find each task's empirical MSC).
+
+## 2026-08-22 (session 6): diagnosed and partially closed the ours-vs-oracle gap
+
+- Diagnosed the real-execution finding above (`ours` 0/6 then 1/6 vs
+  oracle 5/6) by tracing one failing instance (`flask-5014`) directly:
+  `compile()` correctly selected the file the fix belonged in, ranked
+  #9 by relevance, but rendered it at L2 (a symbol list plus scattered
+  snippets, not its real current text) while spending the rest of the
+  8k budget on breadth -- a dozen L0 pointers to barely-related
+  test-file stubs, an artifact of `kind=test` sorting ahead of
+  `kind=code` in the *presentation* order (unrelated to actual value).
+  Asked to rewrite the whole `__init__` method from that L2 view, the
+  model reconstructed it from its own understanding rather than the
+  real text and silently dropped an existing validation check and an
+  attribute initializer it never saw -- a rendering-fidelity problem,
+  not a selection problem.
+- Fix in `src/context_compiler/compiler.py`: new `CompilerConfig.
+  top_k_full_text` (default 3) forces the highest-scoring candidates to
+  full text (L4) before the greedy allocator is free to spend the rest
+  of the budget on breadth. Implemented as a small extension of the
+  existing forced-minimum-representation mechanism already used for
+  pinned items and constraints, not a new code path.
+  `top_k_full_text=0` restores the exact pre-fix behavior.
+- New regression test: `tests/test_compiler.py::
+  test_top_scoring_candidate_gets_full_text_not_just_a_summary` (checks
+  both the forced-L4 behavior and the `top_k_full_text=0` rollback path
+  on the same setup). `python -m unittest discover -s tests -v`:
+  53/53 PASS (52 previous + 1 new).
+- Verified no regression on the existing 15-task synthetic benchmark:
+  before/after B95 is identical on 14 tasks, one improvement
+  (`feature_flag_rollout` 250 -> 150), zero regressions.
+- Verified against real execution: re-ran `benchmarks/real_eval.py`'s
+  `ours` policy on the same 6 real SWE-bench instances at the same 8k
+  budget. `flask-5014` -- the instance that motivated the fix -- now
+  resolves; inspected the actual diff (not just the pass/fail bit) and
+  confirmed it adds the new check while preserving everything the
+  pre-fix version silently dropped. Across all 6 tasks: 0/6 then 2/6,
+  up from 0/6 then 1/6 before the fix. Real, measured progress, still
+  far short of the oracle ceiling (5/6) -- this is one targeted fix for
+  one diagnosed failure mode, not a general solution. Full writeup,
+  including the still-open question of whether selection quality or
+  the missing `expand(CTX_ID)` progressive-disclosure loop is the next
+  bottleneck, in `benchmarks/README.md`.
+- Regenerated `benchmarks/charts/real_eval_method_comparison.svg` to
+  show before/after `ours` bars side by side with oracle/random.

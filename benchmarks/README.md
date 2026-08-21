@@ -517,11 +517,12 @@ At the fixed budget where the oracle curve plateaus (8,000 tokens):
 |---|---|---|
 | **oracle** (ceiling) | 5 / 6 | -- (one run) |
 | **random** (floor) | 0 / 6 | 0 / 6 |
-| **ours** | 0 / 6 | 1 / 6 |
+| **ours** (before the fix below) | 0 / 6 | 1 / 6 |
+| **ours** (after) | 0 / 6 | 2 / 6 |
 
 This is not a flattering number and it is reported exactly as measured.
-`context_compiler`'s current TF-IDF-based selection, on this small real
-sample, is barely distinguishable from randomly ordering the repo and
+`context_compiler`'s TF-IDF-based selection, on this small real sample,
+started out barely distinguishable from randomly ordering the repo and
 truncating -- nowhere near the oracle ceiling. n=6 tasks and n=2 repeats
 is nowhere near enough to call this a precise gap, but the *direction* is
 clear and not something the earlier proxy-based benchmarks in this repo
@@ -529,6 +530,45 @@ could have shown: they all measure "is the right file present," and
 Experiment 1 already establishes that presence isn't the same question
 as "does the model end up producing a correct patch." Closing this gap
 -- not adding more compression -- is the actual open problem.
+
+**2026-08-22 update: diagnosed and partially closed.** Tracing one
+failing instance (`flask-5014`) directly showed why: `compile()` *did*
+select the right file (`blueprints.py`, ranked #9 by relevance) but only
+rendered it at L2 -- a symbol list plus scattered snippets, not its real
+current text -- while the budget was spent on breadth: a dozen L0
+pointers to barely-related test-file stubs (an artifact of
+`kind=test` sorting ahead of `kind=code` in the *presentation* order,
+unrelated to actual value). Asked to rewrite the whole `__init__` method
+from that L2 view, the model reconstructed it from its own understanding
+rather than the real text and silently dropped an existing validation
+check and an attribute initializer it never saw. That's a rendering
+-fidelity problem, not a selection problem.
+
+Fix: `CompilerConfig.top_k_full_text` (default 3) now forces the
+highest-scoring candidates to full text (L4) before the greedy allocator
+is free to spend the rest of the budget on breadth -- a small, targeted
+extension of the existing forced-minimum-representation mechanism
+already used for pinned items and constraints (`src/context_compiler/
+compiler.py`). Confirmed on the synthetic benchmark: zero regressions
+across all 15 tasks, one improvement (`feature_flag_rollout` B95
+250 -> 150). Confirmed on the same real `flask-5014` case that motivated
+it: the patch now adds the new check *and* preserves the existing dot
+-check, `self._blueprints`, and `self.deferred_functions` -- verified
+by inspecting the actual diff, not just the pass/fail bit -- and the
+real hidden tests pass. Across all 6 tasks at the same 8k budget: 0/6
+then 2/6 (up from 0/6 then 1/6) -- real, measured progress, still far
+short of the oracle ceiling. `top_k_full_text=0` restores the exact
+pre-fix behavior for comparison; `tests/test_compiler.py::
+test_top_scoring_candidate_gets_full_text_not_just_a_summary` is the
+regression test for both the fix and the rollback path.
+
+This does not close the gap to oracle -- it's one targeted fix for one
+diagnosed failure mode (rendering fidelity), not a general solution.
+Whether selection quality (does the top-ranked candidate deserve to be
+there at all) is the *next* bottleneck, or whether the real fix is
+testing `compile()` the way it's actually meant to be used --
+progressive `expand(CTX_ID)` calls instead of a single static compiled
+context -- is still open. See "what this does and doesn't show" below.
 
 ### A methodological dead end worth recording: exact-match patches don't survive compression
 

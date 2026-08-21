@@ -450,19 +450,29 @@ close to the oracle ceiling, compared to a random-file-ordering floor?
 |---|---|---|
 | **Oracle** (ceiling) | 5 / 6 | — |
 | **Random** (floor) | 0 / 6 | 0 / 6 |
-| **Ours** | 0 / 6 | 1 / 6 |
+| **Ours** (first measurement) | 0 / 6 | 1 / 6 |
+| **Ours** (after diagnosing why, see below) | 0 / 6 | 2 / 6 |
 
 Reported exactly as measured, including the parts that don't flatter this
-project: at this sample size, `ours` is not yet meaningfully
-distinguishable from randomly ordering the repository — nowhere near the
-oracle ceiling. n=6 tasks / n=2 repeats isn't enough to call this a
-precise gap, but the direction is real, and it's the honest answer to
-"is this useful" rather than the weaker "did it find the right file"
-proxy the file-selection spot check below measures. Closing this gap is
-the actual open problem — see `benchmarks/README.md` for the full
-writeup, including two real patch-corruption bugs found and fixed along
-the way (compressed context breaks exact-match patch snippets; the fix
-was whole-function rewrite via `ast`, not text matching) and the
+project: `ours` started out barely distinguishable from randomly
+ordering the repository — nowhere near the oracle ceiling. Tracing a
+failing instance directly showed why: the compiler *did* select the
+right file, but rendered it as a summary while spending the rest of the
+budget on breadth (many near-empty pointers to barely-related files) —
+so the model, asked to rewrite the file from that summary, silently
+dropped code it never saw. `CompilerConfig.top_k_full_text` now forces
+the top few candidates to full text before the allocator spends anything
+on breadth, trading some of that breadth for the precision an edit
+actually needs — 0/6 then 2/6 after the fix, confirmed against the exact
+same real instance (the patch now preserves everything it used to drop,
+and the real hidden tests pass). Real progress, still far short of the
+ceiling — n=6 tasks / n=2 repeats isn't enough to call any of this a
+precise gap. It's the honest answer to "is this useful" rather than the
+weaker "did it find the right file" proxy the file-selection spot check
+below measures. See `benchmarks/README.md` for the full writeup,
+including two real patch-corruption bugs found and fixed along the way
+(compressed context breaks exact-match patch snippets; the fix was
+whole-function rewrite via `ast`, not text matching) and the
 infrastructure failure modes hit running it (concurrent runs silently
 broke DNS resolution; a reasoning model can burn its whole token budget
 "thinking" about incoherent context and answer nothing at all).

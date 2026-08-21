@@ -3,6 +3,8 @@ import unittest
 from pathlib import Path
 
 from context_compiler import ContextCompiler, ContextStore
+from context_compiler.compiler import CompilerConfig
+from context_compiler.models import RenderLevel
 from context_compiler.scoring import LEARNED_WEIGHTS_V1, ScoringWeights
 
 
@@ -184,6 +186,77 @@ class CompilerTests(unittest.TestCase):
                 target.id,
                 large_considered,
                 "a larger budget should widen the candidate pool enough to reach the target",
+            )
+
+    def test_top_scoring_candidate_gets_full_text_not_just_a_summary(self):
+        # Regression test for a real finding from benchmarks/real_eval.py:
+        # given a real SWE-bench task, the compiler correctly selected the
+        # file the fix actually belonged in, but the greedy allocator spent
+        # the budget on breadth -- many cheap L0 pointers to barely-related
+        # files -- leaving the one file that needed editing at L2 (a symbol
+        # list plus scattered snippets, not its real current text). A model
+        # asked to rewrite a whole function from that L2 view silently
+        # dropped code it never saw. The fix: force the top-K highest
+        # -scoring candidates to full text (L4) before the allocator is
+        # free to spend the rest of the budget on breadth.
+        with tempfile.TemporaryDirectory() as tmp:
+            store = ContextStore(Path(tmp) / "ctx.db")
+            task = "fix the blueprint name validation bug"
+            target = store.add(
+                title="blueprints.py",
+                source="blueprints.py",
+                kind="code",
+                content=(
+                    "class Blueprint:\n"
+                    "    def __init__(self, name, import_name):\n"
+                    "        super().__init__(import_name)\n"
+                    "        if \".\" in name:\n"
+                    "            raise ValueError(\"name may not contain a dot\")\n"
+                    "        self.name = name\n"
+                    "        self._blueprints = []\n"
+                ),
+                importance=0.9,
+            )
+            # A pile of cheap, barely-relevant filler the allocator could
+            # otherwise spend the whole budget spreading across as L0/L1
+            # pointers instead of upgrading the one file that matters.
+            for i in range(30):
+                store.add(
+                    title=f"unrelated-{i}.py",
+                    source=f"unrelated-{i}.py",
+                    kind="code",
+                    content="blueprint name validation " * 5,
+                    importance=0.3,
+                )
+            compiler = ContextCompiler(store)
+            result = compiler.compile(task, budget=600)
+            target_selection = next(s for s in result.selections if s.item_id == target.id)
+            self.assertEqual(
+                target_selection.level,
+                RenderLevel.L4,
+                "the top-scoring candidate should be forced to full text, not left at a summary level",
+            )
+            self.assertIn("self._blueprints = []", target_selection.text)
+
+        # top_k_full_text=0 restores the old behavior, for comparison/rollback.
+        with tempfile.TemporaryDirectory() as tmp:
+            store = ContextStore(Path(tmp) / "ctx.db")
+            target = store.add(
+                title="blueprints.py", source="blueprints.py", kind="code",
+                content=("class Blueprint:\n" + "    # padding line\n" * 40 +
+                          "    def __init__(self, name):\n        self.name = name\n"),
+                importance=0.9,
+            )
+            for i in range(30):
+                store.add(title=f"unrelated-{i}.py", source=f"unrelated-{i}.py", kind="code",
+                           content="blueprint name validation " * 5, importance=0.3)
+            compiler = ContextCompiler(store, config=CompilerConfig(top_k_full_text=0))
+            result = compiler.compile("fix the blueprint name validation bug", budget=600)
+            target_selection = next(s for s in result.selections if s.item_id == target.id)
+            self.assertNotEqual(
+                target_selection.level,
+                RenderLevel.L4,
+                "top_k_full_text=0 should restore the pre-fix behavior on this same setup",
             )
 
     def test_reversible_expand(self):

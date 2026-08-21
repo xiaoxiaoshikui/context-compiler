@@ -20,7 +20,7 @@ success within the swept budgets.
 | rate_limit | 107 | 250 | 150 | 700 |
 | secrets_rotation | 98 | 150 | 250 | 700 |
 | db_pool_timeout | 37 | 400 | 400 | 400 |
-| feature_flag_rollout | 29 | 250 | 250 | 250 |
+| feature_flag_rollout | 29 | 150 | 250 | 250 |
 | rate_config_mismatch | 31 | 400 | 250 | 250 |
 | cache_ttl | 153 | 400 | 400 | 400 |
 | retry_backoff | 75 | 400 | 150 | 400 |
@@ -127,7 +127,7 @@ Task: Explain why only some users see the new checkout flow after it was marked 
 | budget | ours | full | random |
 |---|---|---|---|
 | 80 | 0.00 | 0.00 | 0.30 |
-| 150 | 0.00 | 0.00 | 0.70 |
+| 150 | 1.00 | 0.00 | 0.70 |
 | 250 | 1.00 | 1.00 | 1.00 |
 | 400 | 1.00 | 1.00 | 1.00 |
 | 700 | 1.00 | 1.00 | 1.00 |

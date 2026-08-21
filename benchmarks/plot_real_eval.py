@@ -54,16 +54,29 @@ def main() -> None:
     budget = 8000
     oracle_n = resolved_count(f"full2_oracle_{budget}_r0")
     random_runs = [resolved_count(f"full4_random_{budget}_r{i}") for i in (0, 1)]
-    ours_runs = [resolved_count(f"full4_ours_{budget}_r{i}") for i in (0, 1)]
+    ours_before = [resolved_count(f"full4_ours_{budget}_r{i}") for i in (0, 1)]
+    ours_after = [resolved_count(f"topk1_ours_{budget}_r{i}") for i in (0, 1)]
     svg = bar_chart_svg(
         title=f"Oracle ceiling vs Random floor vs Ours, at a fixed {budget:,}-token budget",
         subtitle=(
             f"Same 6 tasks, same budget, same model -- only how the context was chosen differs. "
-            f"Random/Ours run twice (repeats shown as separate bars; a real model is stochastic, "
-            f"n=2 is not enough to separate luck from signal). Higher = better."
+            f"'Ours (before)' spread the budget over many low-fidelity items; 'Ours (after)' forces "
+            f"the top-3 candidates to full text first (top_k_full_text). Repeats shown as separate "
+            f"bars -- a real model is stochastic, n=2 is not enough to separate luck from signal. "
+            f"Higher = better."
         ),
-        categories=["Oracle (ceiling)", "Random (floor) r0", "Random (floor) r1", "Ours r0", "Ours r1"],
-        series=[("resolved", "#2563eb", [oracle_n, random_runs[0], random_runs[1], ours_runs[0], ours_runs[1]])],
+        categories=[
+            "Oracle (ceiling)",
+            "Random (floor) r0", "Random (floor) r1",
+            "Ours (before) r0", "Ours (before) r1",
+            "Ours (after) r0", "Ours (after) r1",
+        ],
+        series=[("resolved", "#2563eb", [
+            oracle_n,
+            random_runs[0], random_runs[1],
+            ours_before[0], ours_before[1],
+            ours_after[0], ours_after[1],
+        ])],
         y_label=f"instances resolved (of {n_tasks})",
     )
     (CHARTS_DIR / "real_eval_method_comparison.svg").write_text(svg)

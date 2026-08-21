@@ -1050,5 +1050,278 @@
         "pylint-dev__pylint-7080"
       ]
     }
+  },
+  {
+    "tag": "topk1_ours_8000_r0",
+    "policy": "ours",
+    "budget": 8000,
+    "seed": 0,
+    "records": [
+      {
+        "instance_id": "pallets__flask-5014",
+        "policy": "ours",
+        "budget": 8000,
+        "seed": 0,
+        "context_tokens": 8000,
+        "applies": true,
+        "apply_err": "",
+        "n_errors": 0,
+        "patch": "diff --git a/src/flask/blueprints.py b/src/flask/blueprints.py\n--- a/src/flask/blueprints.py\n+++ b/src/flask/blueprints.py\n@@ -180,16 +180,19 @@\n         subdomain: t.Optional[str] = None,\n         url_defaults: t.Optional[dict] = None,\n         root_path: t.Optional[str] = None,\n-        cli_group: t.Optional[str] = _sentinel,  # type: ignore\n+        cli_group: t.Optional[str] = _sentinel,\n     ):\n         super().__init__(\n-            import_name=import_name,\n+            import_name,\n             static_folder=static_folder,\n             static_url_path=static_url_path,\n             template_folder=template_folder,\n             root_path=root_path,\n         )\n \n+        if not name:\n+            raise ValueError(\"'name' may not be empty.\")\n+\n         if \".\" in name:\n             raise ValueError(\"'name' may not contain a dot '.' character.\")\n \n@@ -203,7 +206,9 @@\n \n         self.url_values_defaults = url_defaults\n         self.cli_group = cli_group\n-        self._blueprints: t.List[t.Tuple[\"Blueprint\", dict]] = []\n+\n+        if cli_group is None:\n+            self.cli_group = name\n \n     def _check_setup_finished(self, f_name: str) -> None:\n         if self._got_registered_once:\n",
+        "usage": {
+          "input_tokens": 9673,
+          "output_tokens": 5082,
+          "elapsed_s": 47.1,
+          "attempts": 1,
+          "n_blocks": 1
+        },
+        "resolved": false
+      },
+      {
+        "instance_id": "psf__requests-1921",
+        "policy": "ours",
+        "budget": 8000,
+        "seed": 0,
+        "context_tokens": 7997,
+        "applies": true,
+        "apply_err": "",
+        "n_errors": 0,
+        "patch": "diff --git a/requests/models.py b/requests/models.py\n--- a/requests/models.py\n+++ b/requests/models.py\n@@ -391,7 +391,7 @@\n         \"\"\"Prepares the given HTTP headers.\"\"\"\n \n         if headers:\n-            self.headers = CaseInsensitiveDict((to_native_string(name), value) for name, value in headers.items())\n+            self.headers = CaseInsensitiveDict((to_native_string(name), value) for name, value in headers.items() if value is not None)\n         else:\n             self.headers = CaseInsensitiveDict()\n \n",
+        "usage": {
+          "input_tokens": 9457,
+          "output_tokens": 10567,
+          "elapsed_s": 104.4,
+          "attempts": 1,
+          "n_blocks": 1
+        },
+        "resolved": false
+      },
+      {
+        "instance_id": "pytest-dev__pytest-6202",
+        "policy": "ours",
+        "budget": 8000,
+        "seed": 0,
+        "context_tokens": 8000,
+        "applies": true,
+        "apply_err": "",
+        "n_errors": 0,
+        "patch": "diff --git a/src/_pytest/python.py b/src/_pytest/python.py\n--- a/src/_pytest/python.py\n+++ b/src/_pytest/python.py\n@@ -268,25 +268,21 @@\n         \"\"\"Gets the underlying Python object. May be overwritten by subclasses.\"\"\"\n         return getattr(self.parent.obj, self.name)\n \n-    def getmodpath(self, stopatmodule=True, includemodule=False):\n-        \"\"\" return python path relative to the containing module. \"\"\"\n-        chain = self.listchain()\n-        chain.reverse()\n+    def getmodpath(self):\n+        \"\"\" return path portion of module, i.e. test_module.getmodpath is 'test_module'\n+        \"\"\"\n         parts = []\n-        for node in chain:\n-            if isinstance(node, Instance):\n-                continue\n-            name = node.name\n-            if isinstance(node, Module):\n-                name = os.path.splitext(name)[0]\n-                if stopatmodule:\n-                    if includemodule:\n-                        parts.append(name)\n-                    break\n-            parts.append(name)\n+        obj = self.obj\n+        while obj is not None:\n+            if obj is self:\n+                break\n+            name = getattr(obj, \"__name__\", None)\n+            if name:\n+                parts.append(name)\n+            obj = getattr(obj, \"__parent__\", None)\n         parts.reverse()\n         s = \".\".join(parts)\n-        return s.replace(\".[\", \"[\")\n+        return s\n \n     def reportinfo(self):\n         # XXX caching?\n",
+        "usage": {
+          "input_tokens": 10467,
+          "output_tokens": 1353,
+          "elapsed_s": 17.3,
+          "attempts": 1,
+          "n_blocks": 1
+        },
+        "resolved": false
+      },
+      {
+        "instance_id": "pylint-dev__pylint-7080",
+        "policy": "ours",
+        "budget": 8000,
+        "seed": 0,
+        "context_tokens": 7987,
+        "applies": false,
+        "apply_err": "empty patch",
+        "n_errors": 0,
+        "patch": "",
+        "usage": {
+          "input_tokens": 10217,
+          "output_tokens": 16478,
+          "elapsed_s": 157.0,
+          "attempts": 2,
+          "n_blocks": 1
+        },
+        "resolved": false
+      },
+      {
+        "instance_id": "astropy__astropy-12907",
+        "policy": "ours",
+        "budget": 8000,
+        "seed": 0,
+        "context_tokens": 7993,
+        "applies": true,
+        "apply_err": "",
+        "n_errors": 0,
+        "patch": "diff --git a/astropy/modeling/separable.py b/astropy/modeling/separable.py\n--- a/astropy/modeling/separable.py\n+++ b/astropy/modeling/separable.py\n@@ -288,27 +288,23 @@\n \n \n def _separable(transform):\n-    \"\"\"\n-    Calculate the separability of outputs.\n-\n-    Parameters\n-    ----------\n-    transform : `astropy.modeling.Model`\n-        A transform (usually a compound model).\n-\n-    Returns :\n-    is_separable : ndarray of dtype np.bool\n-        An array of shape (transform.n_outputs,) of boolean type\n-        Each element represents the separablity of the corresponding output.\n-    \"\"\"\n-    if (transform_matrix := transform._calculate_separability_matrix()) is not NotImplemented:\n-        return transform_matrix\n-    elif isinstance(transform, CompoundModel):\n-        sepleft = _separable(transform.left)\n-        sepright = _separable(transform.right)\n-        return _operators[transform.op](sepleft, sepright)\n-    elif isinstance(transform, Model):\n-        return _coord_matrix(transform, 'left', transform.n_outputs)\n+    if isinstance(transform, CompoundModel):\n+        lmat = _separable(transform.left)\n+        rmat = _separable(transform.right)\n+\n+        if transform.op == '&':\n+            return np.block([\n+                [lmat, np.zeros((lmat.shape[0], rmat.shape[1]), dtype=bool)],\n+                [np.zeros((rmat.shape[0], lmat.shape[1]), dtype=bool), rmat]\n+            ])\n+        elif transform.op == '|':\n+            return np.dot(rmat, lmat)\n+        else:\n+            raise ValueError(f\"Unexpected compound operator: {transform.op}\")\n+    elif transform.separable:\n+        return np.ones((transform.n_outputs, transform.n_inputs), dtype=bool)\n+    else:\n+        return np.eye(transform.n_outputs, transform.n_inputs, dtype=bool)\n \n \n # Maps modeling operators to a function computing and represents the\n",
+        "usage": {
+          "input_tokens": 11052,
+          "output_tokens": 11444,
+          "elapsed_s": 119.3,
+          "attempts": 1,
+          "n_blocks": 1
+        },
+        "resolved": false
+      },
+      {
+        "instance_id": "django__django-16082",
+        "policy": "ours",
+        "budget": 8000,
+        "seed": 0,
+        "context_tokens": 7994,
+        "applies": true,
+        "apply_err": "",
+        "n_errors": 0,
+        "patch": "diff --git a/django/db/models/expressions.py b/django/db/models/expressions.py\n--- a/django/db/models/expressions.py\n+++ b/django/db/models/expressions.py\n@@ -648,21 +648,25 @@\n         self.lhs, self.rhs = exprs\n \n     def _resolve_output_field(self):\n-        # We avoid using super() here for reasons given in\n-        # Expression._resolve_output_field()\n-        combined_type = _resolve_combined_type(\n-            self.connector,\n-            type(self.lhs._output_field_or_none),\n-            type(self.rhs._output_field_or_none),\n-        )\n-        if combined_type is None:\n-            raise FieldError(\n-                f\"Cannot infer type of {self.connector!r} expression involving these \"\n-                f\"types: {self.lhs.output_field.__class__.__name__}, \"\n-                f\"{self.rhs.output_field.__class__.__name__}. You must set \"\n-                f\"output_field.\"\n-            )\n-        return combined_type()\n+        # We infer the output type of the combined expression by using\n+        # `_resolve_output_field` of source expressions.\n+        source_fields = [expr.output_field for expr in self.get_source_expressions()]\n+        if len(set(source_fields)) == 1:\n+            return source_fields[0]\n+        if self.connector in (\n+            self.ADD,\n+            self.SUB,\n+            self.MUL,\n+            self.DIV,\n+            self.POW,\n+            self.MOD,\n+        ):\n+            types = {type(field) for field in source_fields}\n+            if types <= {IntegerField, DecimalField}:\n+                return DecimalField()\n+            if types <= {IntegerField, FloatField}:\n+                return FloatField()\n+        return source_fields[0]\n \n     def as_sql(self, compiler, connection):\n         expressions = []\n",
+        "usage": {
+          "input_tokens": 9354,
+          "output_tokens": 11862,
+          "elapsed_s": 110.7,
+          "attempts": 2,
+          "n_blocks": 1
+        },
+        "resolved": false
+      }
+    ],
+    "harness": {
+      "resolved_ids": [],
+      "unresolved_ids": [
+        "astropy__astropy-12907",
+        "django__django-16082",
+        "pallets__flask-5014",
+        "psf__requests-1921",
+        "pytest-dev__pytest-6202"
+      ],
+      "empty_patch_ids": [
+        "pylint-dev__pylint-7080"
+      ],
+      "error_ids": []
+    }
+  },
+  {
+    "tag": "topk1_ours_8000_r1",
+    "policy": "ours",
+    "budget": 8000,
+    "seed": 1,
+    "records": [
+      {
+        "instance_id": "pallets__flask-5014",
+        "policy": "ours",
+        "budget": 8000,
+        "seed": 1,
+        "context_tokens": 8000,
+        "applies": true,
+        "apply_err": "",
+        "n_errors": 0,
+        "patch": "diff --git a/src/flask/blueprints.py b/src/flask/blueprints.py\n--- a/src/flask/blueprints.py\n+++ b/src/flask/blueprints.py\n@@ -180,29 +180,32 @@\n         subdomain: t.Optional[str] = None,\n         url_defaults: t.Optional[dict] = None,\n         root_path: t.Optional[str] = None,\n-        cli_group: t.Optional[str] = _sentinel,  # type: ignore\n+        cli_group: t.Optional[str] = _sentinel,\n     ):\n         super().__init__(\n-            import_name=import_name,\n+            import_name,\n             static_folder=static_folder,\n             static_url_path=static_url_path,\n             template_folder=template_folder,\n             root_path=root_path,\n         )\n \n+        if not name:\n+            raise ValueError(\"'name' may not be empty.\")\n+\n         if \".\" in name:\n             raise ValueError(\"'name' may not contain a dot '.' character.\")\n \n         self.name = name\n         self.url_prefix = url_prefix\n         self.subdomain = subdomain\n-        self.deferred_functions: t.List[DeferredSetupFunction] = []\n \n         if url_defaults is None:\n             url_defaults = {}\n \n         self.url_values_defaults = url_defaults\n         self.cli_group = cli_group\n+        self.deferred_functions: t.List[DeferredSetupFunction] = []\n         self._blueprints: t.List[t.Tuple[\"Blueprint\", dict]] = []\n \n     def _check_setup_finished(self, f_name: str) -> None:\n",
+        "usage": {
+          "input_tokens": 9673,
+          "output_tokens": 4082,
+          "elapsed_s": 35.8,
+          "attempts": 1,
+          "n_blocks": 1
+        },
+        "resolved": true
+      },
+      {
+        "instance_id": "psf__requests-1921",
+        "policy": "ours",
+        "budget": 8000,
+        "seed": 1,
+        "context_tokens": 7997,
+        "applies": true,
+        "apply_err": "",
+        "n_errors": 0,
+        "patch": "diff --git a/requests/models.py b/requests/models.py\n--- a/requests/models.py\n+++ b/requests/models.py\n@@ -390,10 +390,12 @@\n     def prepare_headers(self, headers):\n         \"\"\"Prepares the given HTTP headers.\"\"\"\n \n+        self.headers = CaseInsensitiveDict()\n+\n         if headers:\n-            self.headers = CaseInsensitiveDict((to_native_string(name), value) for name, value in headers.items())\n-        else:\n-            self.headers = CaseInsensitiveDict()\n+            for name, value in headers.items():\n+                if value is not None:\n+                    self.headers[to_native_string(name)] = value\n \n     def prepare_body(self, data, files):\n         \"\"\"Prepares the given HTTP body data.\"\"\"\n",
+        "usage": {
+          "input_tokens": 9457,
+          "output_tokens": 4229,
+          "elapsed_s": 58.6,
+          "attempts": 1,
+          "n_blocks": 1
+        },
+        "resolved": true
+      },
+      {
+        "instance_id": "pytest-dev__pytest-6202",
+        "policy": "ours",
+        "budget": 8000,
+        "seed": 1,
+        "context_tokens": 8000,
+        "applies": true,
+        "apply_err": "",
+        "n_errors": 0,
+        "patch": "diff --git a/src/_pytest/python.py b/src/_pytest/python.py\n--- a/src/_pytest/python.py\n+++ b/src/_pytest/python.py\n@@ -268,25 +268,20 @@\n         \"\"\"Gets the underlying Python object. May be overwritten by subclasses.\"\"\"\n         return getattr(self.parent.obj, self.name)\n \n-    def getmodpath(self, stopatmodule=True, includemodule=False):\n-        \"\"\" return python path relative to the containing module. \"\"\"\n-        chain = self.listchain()\n-        chain.reverse()\n+    def getmodpath(self):\n         parts = []\n-        for node in chain:\n-            if isinstance(node, Instance):\n-                continue\n-            name = node.name\n-            if isinstance(node, Module):\n-                name = os.path.splitext(name)[0]\n-                if stopatmodule:\n-                    if includemodule:\n-                        parts.append(name)\n-                    break\n-            parts.append(name)\n+        obj = self.obj\n+        while obj is not None:\n+            try:\n+                name = obj.__name__\n+            except AttributeError:\n+                name = None\n+            if name:\n+                parts.append(name)\n+            obj = getattr(obj, \"__wrapped__\", None)\n         parts.reverse()\n         s = \".\".join(parts)\n-        return s.replace(\".[\", \"[\")\n+        return s\n \n     def reportinfo(self):\n         # XXX caching?\n",
+        "usage": {
+          "input_tokens": 10467,
+          "output_tokens": 947,
+          "elapsed_s": 12.2,
+          "attempts": 1,
+          "n_blocks": 1
+        },
+        "resolved": false
+      },
+      {
+        "instance_id": "pylint-dev__pylint-7080",
+        "policy": "ours",
+        "budget": 8000,
+        "seed": 1,
+        "context_tokens": 7987,
+        "applies": true,
+        "apply_err": "",
+        "n_errors": 0,
+        "patch": "diff --git a/pylint/lint/expand_modules.py b/pylint/lint/expand_modules.py\n--- a/pylint/lint/expand_modules.py\n+++ b/pylint/lint/expand_modules.py\n@@ -50,13 +50,14 @@\n     element: str,\n     ignore_list: list[str],\n     ignore_list_re: list[Pattern[str]],\n-    ignore_list_paths_re: list[Pattern[str]],\n+    ignore_paths: list[Pattern[str]],\n ) -> bool:\n     basename = os.path.basename(element)\n     return (\n         basename in ignore_list\n         or _is_in_ignore_list_re(basename, ignore_list_re)\n-        or _is_in_ignore_list_re(element, ignore_list_paths_re)\n+        or _is_in_ignore_list_re(element, ignore_list_re)\n+        or _is_in_ignore_list_re(element, ignore_paths)\n     )\n \n \n@@ -64,98 +65,87 @@\n     files_or_modules: Sequence[str],\n     ignore_list: list[str],\n     ignore_list_re: list[Pattern[str]],\n-    ignore_list_paths_re: list[Pattern[str]],\n+    ignore_paths: list[Pattern[str]],\n ) -> tuple[list[ModuleDescriptionDict], list[ErrorDescriptionDict]]:\n-    \"\"\"Take a list of files/modules/packages and return the list of tuple\n-    (file, module name) which have to be actually checked.\n+    \"\"\"Expand a list of files/modules/packages into a list of file paths and modules.\n+\n+    The result is a list of module descriptions, each containing the file path,\n+    the module name, and whether the file was directly provided as an argument.\n     \"\"\"\n     result: list[ModuleDescriptionDict] = []\n     errors: list[ErrorDescriptionDict] = []\n     path = sys.path.copy()\n \n     for something in files_or_modules:\n-        basename = os.path.basename(something)\n-        if _is_ignored_file(\n-            something, ignore_list, ignore_list_re, ignore_list_paths_re\n-        ):\n-            continue\n-        module_path = get_python_path(something)\n-        additional_search_path = [\".\", module_path] + path\n-        if os.path.exists(something):\n-            # this is a file or a directory\n-            try:\n+        try:\n+            basename = os.path.basename(something)\n+            if os.path.isdir(something):\n+                for root, dirs, files in os.walk(something):\n+                    for dirname in dirs[:]:\n+                        if _is_ignored_file(\n+                            os.path.join(root, dirname),\n+                            ignore_list,\n+                            ignore_list_re,\n+                            ignore_paths,\n+                        ):\n+                            dirs.remove(dirname)\n+                    for filename in files:\n+                        if not filename.endswith(\".py\"):\n+                            continue\n+                        filepath = os.path.join(root, filename)\n+                        if _is_ignored_file(\n+                            filepath,\n+                            ignore_list,\n+                            ignore_list_re,\n+                            ignore_paths,\n+                        ):\n+                            continue\n+                        modname = \".\".join(\n+                            _modpath_from_file(\n+                                filepath, is_namespace=True, path=path\n+                            )\n+                        )\n+                        result.append(\n+                            {\"path\": filepath, \"name\": modname, \"isarg\": True}\n+                        )\n+            elif os.path.isfile(something):\n+                filepath = os.path.realpath(os.path.expanduser(something))\n+                if _is_ignored_file(\n+                    filepath,\n+                    ignore_list,\n+                    ignore_list_re,\n+                    ignore_paths,\n+                ):\n+                    continue\n                 modname = \".\".join(\n-                    modutils.modpath_from_file(something, path=additional_search_path)\n+                    _modpath_from_file(\n+                        filepath, is_namespace=False, path=path\n+                    )\n                 )\n-            except ImportError:\n-                modname = os.path.splitext(basename)[0]\n-            if os.path.isdir(something):\n-                filepath = os.path.join(something, \"__init__.py\")\n+                result.append({\"path\": filepath, \"name\": modname, \"isarg\": True})\n             else:\n-                filepath = something\n-        else:\n-            # suppose it's a module or package\n-            modname = something\n-            try:\n-                filepath = modutils.file_from_modpath(\n-                    modname.split(\".\"), path=additional_search_path\n-                )\n-                if filepath is None:\n+                modname = something\n+                try:\n+                    filepath = modutils.file_from_modpath(\n+                        modname.split(\".\"), path=path\n+                    )\n+                    if filepath is None:\n+                        continue\n+                except (ImportError, SyntaxError) as ex:\n+                    # The SyntaxError is a Python bug and should be\n+                    # removed once we move away from imp.find_module:\n+                    # https://bugs.python.org/issue10588\n+                    errors.append({\"key\": \"fatal\", \"mod\": modname, \"ex\": ex})\n                     continue\n-            except (ImportError, SyntaxError) as ex:\n-                # The SyntaxError is a Python bug and should be\n-                # removed once we move away from imp.find_module: https://bugs.python.org/issue10588\n-                errors.append({\"key\": \"fatal\", \"mod\": modname, \"ex\": ex})\n-                continue\n-        filepath = os.path.normpath(filepath)\n-        modparts = (modname or something).split(\".\")\n-        try:\n-            spec = modutils.file_info_from_modpath(\n-                modparts, path=additional_search_path\n-            )\n-        except ImportError:\n-            # Might not be acceptable, don't crash.\n-            is_namespace = False\n-            is_directory = os.path.isdir(something)\n-        else:\n-            is_namespace = modutils.is_namespace(spec)\n-            is_directory = modutils.is_directory(spec)\n-        if not is_namespace:\n-            result.append(\n-                {\n-                    \"path\": filepath,\n-                    \"name\": modname,\n-                    \"isarg\": True,\n-                    \"basepath\": filepath,\n-                    \"basename\": modname,\n-                }\n-            )\n-        has_init = (\n-            not (modname.endswith(\".__init__\") or modname == \"__init__\")\n-            and os.path.basename(filepath) == \"__init__.py\"\n-        )\n-        if has_init or is_namespace or is_directory:\n-            for subfilepath in modutils.get_module_files(\n-                os.path.dirname(filepath), ignore_list, list_all=is_namespace\n-            ):\n-                if filepath == subfilepath:\n+                if _is_ignored_file(\n+                    filepath,\n+                    ignore_list,\n+                    ignore_list_re,\n+                    ignore_paths,\n+                ):\n                     continue\n-                if _is_in_ignore_list_re(\n-                    os.path.basename(subfilepath), ignore_list_re\n-                ) or _is_in_ignore_list_re(subfilepath, ignore_list_paths_re):\n-                    continue\n+                result.append({\"path\": filepath, \"name\": modname, \"isarg\": False})\n+        except (ImportError, SyntaxError) as ex:\n+            errors.append({\"key\": \"fatal\", \"mod\": basename, \"ex\": ex})\n \n-                modpath = _modpath_from_file(\n-                    subfilepath, is_namespace, path=additional_search_path\n-                )\n-                submodname = \".\".join(modpath)\n-                result.append(\n-                    {\n-                        \"path\": subfilepath,\n-                        \"name\": submodname,\n-                        \"isarg\": False,\n-                        \"basepath\": filepath,\n-                        \"basename\": modname,\n-                    }\n-                )\n     return result, errors\n",
+        "usage": {
+          "input_tokens": 10217,
+          "output_tokens": 23557,
+          "elapsed_s": 253.2,
+          "attempts": 1,
+          "n_blocks": 2
+        },
+        "resolved": false
+      },
+      {
+        "instance_id": "astropy__astropy-12907",
+        "policy": "ours",
+        "budget": 8000,
+        "seed": 1,
+        "context_tokens": 7993,
+        "applies": true,
+        "apply_err": "",
+        "n_errors": 0,
+        "patch": "diff --git a/astropy/modeling/separable.py b/astropy/modeling/separable.py\n--- a/astropy/modeling/separable.py\n+++ b/astropy/modeling/separable.py\n@@ -64,42 +64,15 @@\n \n \n def separability_matrix(transform):\n-    \"\"\"\n-    Compute the correlation between outputs and inputs.\n-\n-    Parameters\n-    ----------\n-    transform : `~astropy.modeling.core.Model`\n-        A (compound) model.\n-\n-    Returns\n-    -------\n-    separable_matrix : ndarray\n-        A boolean correlation matrix of shape (n_outputs, n_inputs).\n-        Indicates the dependence of outputs on inputs. For completely\n-        independent outputs, the diagonal elements are True and\n-        off-diagonal elements are False.\n-\n-    Examples\n-    --------\n-    >>> from astropy.modeling.models import Shift, Scale, Rotation2D, Polynomial2D\n-    >>> separability_matrix(Shift(1) & Shift(2) | Scale(1) & Scale(2))\n-        array([[ True, False], [False,  True]]...)\n-    >>> separability_matrix(Shift(1) & Shift(2) | Rotation2D(2))\n-        array([[ True,  True], [ True,  True]]...)\n-    >>> separability_matrix(Shift(1) & Shift(2) | Mapping([0, 1, 0, 1]) | \\\n-        Polynomial2D(1) & Polynomial2D(2))\n-        array([[ True,  True], [ True,  True]]...)\n-    >>> separability_matrix(Shift(1) & Shift(2) | Mapping([0, 1, 0, 1]))\n-        array([[ True, False], [False,  True], [ True, False], [False,  True]]...)\n-\n-    \"\"\"\n-    if transform.n_inputs == 1 and transform.n_outputs > 1:\n-        return np.ones((transform.n_outputs, transform.n_inputs),\n-                       dtype=np.bool_)\n-    separable_matrix = _separable(transform)\n-    separable_matrix = np.where(separable_matrix != 0, True, False)\n-    return separable_matrix\n+    if isinstance(transform, CompoundModel):\n+        if transform.op == '&':\n+            return _cstack(separability_matrix(transform.left),\n+                           separability_matrix(transform.right))\n+        elif transform.op == '|':\n+            return _cdot(separability_matrix(transform.left),\n+                         separability_matrix(transform.right))\n+\n+    return _separable(transform)\n \n \n def _compute_n_outputs(left, right):\n",
+        "usage": {
+          "input_tokens": 11052,
+          "output_tokens": 19007,
+          "elapsed_s": 251.1,
+          "attempts": 1,
+          "n_blocks": 1
+        },
+        "resolved": false
+      },
+      {
+        "instance_id": "django__django-16082",
+        "policy": "ours",
+        "budget": 8000,
+        "seed": 1,
+        "context_tokens": 7994,
+        "applies": true,
+        "apply_err": "",
+        "n_errors": 0,
+        "patch": "diff --git a/django/db/models/expressions.py b/django/db/models/expressions.py\n--- a/django/db/models/expressions.py\n+++ b/django/db/models/expressions.py\n@@ -650,19 +650,25 @@\n     def _resolve_output_field(self):\n         # We avoid using super() here for reasons given in\n         # Expression._resolve_output_field()\n-        combined_type = _resolve_combined_type(\n-            self.connector,\n-            type(self.lhs._output_field_or_none),\n-            type(self.rhs._output_field_or_none),\n-        )\n-        if combined_type is None:\n-            raise FieldError(\n-                f\"Cannot infer type of {self.connector!r} expression involving these \"\n-                f\"types: {self.lhs.output_field.__class__.__name__}, \"\n-                f\"{self.rhs.output_field.__class__.__name__}. You must set \"\n-                f\"output_field.\"\n-            )\n-        return combined_type()\n+        source_fields = self.get_source_fields()\n+        if len(source_fields) == 1:\n+            return source_fields[0]\n+        if self.connector in (self.ADD, self.SUB, self.MUL, self.DIV, self.MOD, self.POW):\n+            # Numeric -> use DecimalField if any of the source fields is a\n+            # DecimalField, FloatField if any is a FloatField, and\n+            # IntegerField otherwise.\n+            field_types = {type(field) for field in source_fields}\n+            if field_types <= {\n+                fields.IntegerField,\n+                fields.FloatField,\n+                fields.DecimalField,\n+            }:\n+                if fields.DecimalField in field_types:\n+                    return fields.DecimalField()\n+                if fields.FloatField in field_types:\n+                    return fields.FloatField()\n+                return fields.IntegerField()\n+        return super()._resolve_output_field()\n \n     def as_sql(self, compiler, connection):\n         expressions = []\n",
+        "usage": {
+          "input_tokens": 9354,
+          "output_tokens": 21422,
+          "elapsed_s": 255.3,
+          "attempts": 1,
+          "n_blocks": 1
+        },
+        "resolved": false
+      }
+    ],
+    "harness": {
+      "resolved_ids": [
+        "pallets__flask-5014",
+        "psf__requests-1921"
+      ],
+      "unresolved_ids": [
+        "astropy__astropy-12907",
+        "django__django-16082",
+        "pytest-dev__pytest-6202"
+      ],
+      "empty_patch_ids": [],
+      "error_ids": [
+        "pylint-dev__pylint-7080"
+      ]
+    }
   }
 ]
