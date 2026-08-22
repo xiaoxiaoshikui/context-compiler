@@ -21,7 +21,10 @@ be swapped in without touching `ContextCompiler`.
 
 from __future__ import annotations
 
+import json
 import math
+import os
+import urllib.request
 from typing import TYPE_CHECKING, Protocol
 
 from .models import ContextItem, ContextKind
@@ -106,6 +109,91 @@ class FTSRetriever:
 
     def rank(self, query: str, items: list[ContextItem], *, limit: int) -> list[ContextItem]:
         return self.store.candidate_search(query, limit=limit)
+
+
+class EmbeddingRetriever:
+    """Cosine similarity over real embedding vectors from a hosted API,
+    instead of `TfidfRetriever`'s lexical term-overlap proxy.
+
+    This is the "real embedding-based retrieval" the module docstring above
+    flags as still open -- opt-in only, never the default, since it needs a
+    real API key and makes a real (billed, network) call. Implemented over
+    stdlib `urllib` against an OpenAI-compatible `/embeddings` endpoint --
+    no new required dependency, consistent with this project's
+    zero-required-dependency core (the same choice `benchmarks/real_eval.py`
+    makes for its DeepSeek/GPT/Gemini calls).
+
+    Item embeddings are cached on the instance by item id, since a
+    `ContextCompiler` typically calls `rank()` many times against the same
+    repository across a session (a synthetic benchmark's task x budget x
+    repeat sweep, or `compile()` followed by `search()`) -- recomputing them
+    per call would be both slow and needlessly expensive. The cache is
+    intentionally unbounded and never invalidated: if the underlying store's
+    content changes, construct a new `EmbeddingRetriever`.
+    """
+
+    def __init__(
+        self,
+        *,
+        api_key: str | None = None,
+        model: str = "text-embedding-3-small",
+        url: str = "https://api.openai.com/v1/embeddings",
+        api_key_env: str = "OPENAI_API_KEY",
+    ) -> None:
+        self.api_key = api_key or os.environ.get(api_key_env)
+        self.model = model
+        self.url = url
+        self._cache: dict[str, list[float]] = {}
+
+    def _embed_batch(self, texts: list[str]) -> list[list[float]]:
+        payload = json.dumps({"model": self.model, "input": texts}).encode("utf-8")
+        req = urllib.request.Request(
+            self.url, data=payload,
+            headers={"Content-Type": "application/json", "Authorization": f"Bearer {self.api_key}"},
+        )
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            data = json.loads(resp.read())
+        return [row["embedding"] for row in data["data"]]
+
+    def _embeddings_for(self, items: list[ContextItem]) -> dict[str, list[float]]:
+        missing = [item for item in items if item.id not in self._cache]
+        # Batched, not one call per item -- the embeddings endpoint accepts
+        # a list -- but bounded on both axes: OpenAI's embeddings endpoint
+        # caps a single request at 300k input tokens total, confirmed
+        # directly (a real repository's item pool blew through that at 256
+        # items/batch x 8000 chars each). 2000 chars (~500 tokens) is
+        # plenty for a *retrieval* embedding to capture "what is this file
+        # broadly about" -- it doesn't need full-fidelity content the way
+        # the final compiled context sent to a model does.
+        batch_size, chars_per_item = 64, 2000
+        for start in range(0, len(missing), batch_size):
+            batch = missing[start:start + batch_size]
+            vectors = self._embed_batch([_item_text(item)[:chars_per_item] for item in batch])
+            for item, vec in zip(batch, vectors):
+                self._cache[item.id] = vec
+        return {item.id: self._cache[item.id] for item in items}
+
+    def rank(self, query: str, items: list[ContextItem], *, limit: int) -> list[ContextItem]:
+        if not items:
+            return []
+        if not self.api_key:
+            raise RuntimeError(
+                "EmbeddingRetriever needs a real API key (pass api_key= or set the env "
+                "var named by api_key_env, default OPENAI_API_KEY) -- it is never the "
+                "default retriever precisely because it needs one."
+            )
+        item_vecs = self._embeddings_for(items)
+        query_vec = self._embed_batch([query])[0]
+        q_norm = math.sqrt(sum(v * v for v in query_vec)) or 1.0
+
+        def cos_sim(vec: list[float]) -> float:
+            dot = sum(a * b for a, b in zip(query_vec, vec))
+            v_norm = math.sqrt(sum(v * v for v in vec)) or 1.0
+            return dot / (q_norm * v_norm)
+
+        scored = [(cos_sim(item_vecs[item.id]), idx, item) for idx, item in enumerate(items)]
+        scored.sort(key=lambda row: (-row[0], row[1]))
+        return [item for _, _, item in scored[:limit]]
 
 
 def augment_with_critical_items(

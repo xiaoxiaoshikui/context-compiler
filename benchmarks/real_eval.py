@@ -56,8 +56,19 @@ Requirements (none of this is installed by default -- see README):
                                             # HF dataset used here
     Docker Desktop running                 # the harness builds/pulls real
                                             # per-instance execution images
-    DEEPSEEK_API_KEY in the environment    # every patch-generation call is
-                                            # billed (cheap, but not free)
+    An API key for whichever --model you pass (default: deepseek):
+       --model deepseek  needs DEEPSEEK_API_KEY
+       --model gpt       needs OPENAI_API_KEY     (pip install nothing extra;
+       --model gemini    needs GEMINI_API_KEY      all three are called via
+                                                    stdlib urllib against an
+                                                    OpenAI-compatible endpoint)
+       --model claude    needs ANTHROPIC_API_KEY and `pip install anthropic`
+                                                    (uses the official SDK)
+    Every patch-generation call is billed against whichever key you use --
+    cheap, but not free. --model lets you hold context construction fixed
+    and swap only the downstream model, which is the direct way to test
+    whether a gap is really about context or about the model/patch-synthesis
+    step -- see benchmarks/README.md's model-swap findings.
 
 This is a research script, not a library the core package depends on --
 consistent with `llm_judge_eval.py`, it lives here precisely so nobody pays
@@ -247,7 +258,7 @@ def context_random(store: ContextStore, budget: int, seed: int = 0) -> str:
     return COUNTER.truncate("\n\n".join(parts), budget)
 
 
-def context_ours(task_text: str, store: ContextStore, budget: int) -> str:
+def context_ours(task_text: str, store: ContextStore, budget: int, retriever_key: str = "tfidf") -> str:
     """context_compiler's real output -- its L0-L4 compression and all.
 
     (An earlier attempt fed the model full raw text of whichever files
@@ -259,14 +270,27 @@ def context_ours(task_text: str, store: ContextStore, budget: int) -> str:
     compile()'s core mechanism (spend a little on many relevant files
     instead of everything on one) rather than fairly testing it. Fixed
     downstream instead, in the patch mechanism -- see module docstring.)
+
+    `retriever_key="embedding"` swaps context_compiler's default TF-IDF
+    first-stage retrieval for real OpenAI embeddings (needs
+    OPENAI_API_KEY, real network cost per call) -- see
+    `EmbeddingRetriever` in `context_compiler.retrieval` and
+    benchmarks/README.md's retrieval-algorithm findings.
     """
-    return ContextCompiler(store).compile(task_text, budget).text
+    retriever = None
+    if retriever_key == "embedding":
+        from context_compiler.retrieval import EmbeddingRetriever
+
+        retriever = EmbeddingRetriever()
+    return ContextCompiler(store, retriever=retriever).compile(task_text, budget).text
 
 
 CONTEXT_POLICIES = {
-    "oracle": lambda row, store, budget, seed: context_oracle(row, store, budget),
-    "random": lambda row, store, budget, seed: context_random(store, budget, seed),
-    "ours": lambda row, store, budget, seed: context_ours(row["problem_statement"], store, budget),
+    "oracle": lambda row, store, budget, seed, retriever_key: context_oracle(row, store, budget),
+    "random": lambda row, store, budget, seed, retriever_key: context_random(store, budget, seed),
+    "ours": lambda row, store, budget, seed, retriever_key: context_ours(
+        row["problem_statement"], store, budget, retriever_key
+    ),
 }
 
 
@@ -399,27 +423,49 @@ def function_rewrites_to_patch(rewrites: list[tuple[str, str, str]], by_source: 
 
 
 # --------------------------------------------------------------------------
-# DeepSeek call -- hard wall-clock timeout + retries.
+# Model calls -- hard wall-clock timeout + retries, one dispatcher over
+# several providers so the *downstream model* can be swapped while every
+# other variable (context construction, budget, patch format, harness)
+# stays fixed. This is what makes the "is the bottleneck really context, or
+# is it the model/patch-synthesis step" question answerable directly rather
+# than argued about: run the identical compiled context through a different
+# model and see if the resolved count moves.
 #
-# Two distinct real failure modes were found running this against
-# incoherent context (the `random` policy's shuffled multi-file dump):
+# Two distinct real failure modes were found running the DeepSeek call
+# against incoherent context (the `random` policy's shuffled multi-file
+# dump), and both generalize to any *reasoning* model (confirmed directly
+# for Gemini's `gemini-pro-latest` too -- a trivial prompt at
+# max_tokens=20 came back with content="" and reasoning silently eating the
+# whole budget, exactly the DeepSeek failure mode):
 #   1. Genuine network stalls (a direct curl to the same endpoint moments
 #      later returned in ~1s) -- `urlopen`'s own `timeout` only resets on
 #      each socket read, so a server trickling bytes without ever going
 #      fully idle can outlast it. The ThreadPoolExecutor wall-clock
 #      timeout below enforces a real hard cap regardless (the stuck
 #      thread is abandoned, not joined, on timeout).
-#   2. Reasoning-budget exhaustion, confirmed directly: incoherent context
-#      can drive this reasoning model to spend its *entire* max_tokens on
-#      reasoning_content and emit zero actual answer (finish_reason=
-#      "length", content=""). This is not a hang -- the HTTP call
-#      completes normally in ~200s -- it's the model failing to converge
-#      within budget. A larger max_tokens (24000) gives it enough room to
-#      reason *and* still answer; the timeouts below are sized to match.
+#   2. Reasoning-budget exhaustion: incoherent (or just hard) context can
+#      drive a reasoning model to spend its *entire* max_tokens on hidden
+#      reasoning and emit zero actual answer (finish_reason="length",
+#      content=""). This is not a hang -- the HTTP call completes normally
+#      -- it's the model failing to converge within budget. A generous
+#      max_tokens is what actually fixes it, not a longer timeout.
 # --------------------------------------------------------------------------
 
-DEEPSEEK_URL = "https://api.deepseek.com/chat/completions"
-DEEPSEEK_MODEL = "deepseek-v4-pro"
+MODEL_SPECS = {
+    # key: (display name, provider kind, chat-completions URL, api-key env
+    # var, wire model id, max-tokens param name, max-tokens value)
+    "deepseek": ("deepseek-v4-pro", "openai_compat",
+                 "https://api.deepseek.com/chat/completions", "DEEPSEEK_API_KEY",
+                 "deepseek-v4-pro", "max_tokens", 24000),
+    "gpt": ("gpt-5.2", "openai_compat",
+            "https://api.openai.com/v1/chat/completions", "OPENAI_API_KEY",
+            "gpt-5.2", "max_completion_tokens", 16000),
+    "gemini": ("gemini-pro-latest", "openai_compat",
+               "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+               "GEMINI_API_KEY", "gemini-pro-latest", "max_tokens", 20000),
+    "claude": ("claude-sonnet-5", "anthropic", None, "ANTHROPIC_API_KEY",
+               "claude-sonnet-5", None, 8000),
+}
 
 
 def _fetch(req) -> dict:
@@ -427,23 +473,26 @@ def _fetch(req) -> dict:
         return json.loads(resp.read())
 
 
-def call_deepseek(system: str, user_msg: str, attempts: int = 4) -> tuple[str, dict]:
+def _call_openai_compat(
+    url: str, api_key_env: str, wire_model: str, max_tokens_param: str, max_tokens: int,
+    system: str, user_msg: str, attempts: int,
+) -> tuple[str, dict]:
     payload = json.dumps({
-        "model": DEEPSEEK_MODEL,
+        "model": wire_model,
         "messages": [
             {"role": "system", "content": system},
             {"role": "user", "content": user_msg},
         ],
-        "max_tokens": 24000,
+        max_tokens_param: max_tokens,
         "temperature": 0.2,
     }).encode("utf-8")
     last_exc: Exception | None = None
     for attempt in range(1, attempts + 1):
         req = urllib.request.Request(
-            DEEPSEEK_URL, data=payload,
+            url, data=payload,
             headers={
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {os.environ['DEEPSEEK_API_KEY']}",
+                "Authorization": f"Bearer {os.environ[api_key_env]}",
             },
         )
         t0 = time.time()
@@ -453,15 +502,19 @@ def call_deepseek(system: str, user_msg: str, attempts: int = 4) -> tuple[str, d
         except Exception as exc:  # noqa: BLE001 -- retry on anything, log what it was
             ex.shutdown(wait=False)
             last_exc = exc
-            print(f"    deepseek call attempt {attempt}/{attempts} failed after {time.time() - t0:.1f}s: {exc!r}")
+            print(f"    {wire_model} call attempt {attempt}/{attempts} failed after {time.time() - t0:.1f}s: {exc!r}")
             continue
         ex.shutdown(wait=False)
         elapsed = time.time() - t0
+        if "error" in data:
+            last_exc = RuntimeError(f"API error: {data['error']}")
+            print(f"    {wire_model} call attempt {attempt}/{attempts}: {last_exc}")
+            continue
         msg = data["choices"][0]["message"]
         raw = msg.get("content") or ""
         if not raw.strip() and data["choices"][0].get("finish_reason") == "length":
             last_exc = RuntimeError("empty content, finish_reason=length (ran out of budget while reasoning)")
-            print(f"    deepseek call attempt {attempt}/{attempts}: {last_exc}")
+            print(f"    {wire_model} call attempt {attempt}/{attempts}: {last_exc}")
             continue
         u = data.get("usage", {})
         usage = {
@@ -471,12 +524,59 @@ def call_deepseek(system: str, user_msg: str, attempts: int = 4) -> tuple[str, d
             "attempts": attempt,
         }
         return raw, usage
-    raise RuntimeError(f"deepseek call failed after {attempts} attempts: {last_exc!r}")
+    raise RuntimeError(f"{wire_model} call failed after {attempts} attempts: {last_exc!r}")
 
 
-def generate_patch(context: str, budget: int, by_source: dict) -> tuple[str, dict, list[str]]:
+def _call_anthropic(wire_model: str, max_tokens: int, system: str, user_msg: str, attempts: int) -> tuple[str, dict]:
+    import anthropic
+
+    client = anthropic.Anthropic(timeout=280.0, max_retries=0)
+    last_exc: Exception | None = None
+    for attempt in range(1, attempts + 1):
+        t0 = time.time()
+        try:
+            response = client.messages.create(
+                model=wire_model,
+                max_tokens=max_tokens,
+                system=system,
+                messages=[{"role": "user", "content": user_msg}],
+            )
+        except Exception as exc:  # noqa: BLE001 -- retry on anything, log what it was
+            last_exc = exc
+            print(f"    {wire_model} call attempt {attempt}/{attempts} failed after {time.time() - t0:.1f}s: {exc!r}")
+            continue
+        elapsed = time.time() - t0
+        raw = next((b.text for b in response.content if b.type == "text"), "")
+        if not raw.strip() and response.stop_reason == "max_tokens":
+            last_exc = RuntimeError("empty content, stop_reason=max_tokens")
+            print(f"    {wire_model} call attempt {attempt}/{attempts}: {last_exc}")
+            continue
+        usage = {
+            "input_tokens": response.usage.input_tokens,
+            "output_tokens": response.usage.output_tokens,
+            "elapsed_s": round(elapsed, 1),
+            "attempts": attempt,
+        }
+        return raw, usage
+    raise RuntimeError(f"{wire_model} call failed after {attempts} attempts: {last_exc!r}")
+
+
+def call_model(model_key: str, system: str, user_msg: str, attempts: int = 4) -> tuple[str, dict]:
+    _, kind, url, api_key_env, wire_model, max_tokens_param, max_tokens = MODEL_SPECS[model_key]
+    if kind == "anthropic":
+        return _call_anthropic(wire_model, max_tokens, system, user_msg, attempts)
+    return _call_openai_compat(url, api_key_env, wire_model, max_tokens_param, max_tokens, system, user_msg, attempts)
+
+
+# Kept as a thin alias -- existing callers/tests referred to this name
+# before the multi-provider dispatcher above existed.
+def call_deepseek(system: str, user_msg: str, attempts: int = 4) -> tuple[str, dict]:
+    return call_model("deepseek", system, user_msg, attempts)
+
+
+def generate_patch(context: str, budget: int, by_source: dict, model_key: str = "deepseek") -> tuple[str, dict, list[str]]:
     user_msg = f"{context}\n\n---\nProduce the REWRITE_FUNCTION blocks now for budget={budget} tokens of context above."
-    raw, usage = call_deepseek(FUNCTION_REWRITE_SYSTEM_PROMPT, user_msg)
+    raw, usage = call_model(model_key, FUNCTION_REWRITE_SYSTEM_PROMPT, user_msg)
     blocks = parse_function_rewrites(raw)
     patch, errors = function_rewrites_to_patch(blocks, by_source)
     usage["n_blocks"] = len(blocks)
@@ -500,12 +600,15 @@ def check_patch_applies(patch: str, repo_dir: Path) -> tuple[bool, str]:
 # end, then verify with the real swebench Docker harness.
 # --------------------------------------------------------------------------
 
-def run_one(row: dict, store: ContextStore, repo_dir: Path, policy: str, budget: int, seed: int) -> dict:
+def run_one(
+    row: dict, store: ContextStore, repo_dir: Path, policy: str, budget: int, seed: int,
+    model_key: str = "deepseek", retriever_key: str = "tfidf",
+) -> dict:
     by_source = {i.source: i for i in store.list(limit=10000)}
-    ctx = CONTEXT_POLICIES[policy](row, store, budget, seed)
+    ctx = CONTEXT_POLICIES[policy](row, store, budget, seed, retriever_key)
     ctx_tokens = COUNTER.count(ctx)
     try:
-        patch, usage, errors = generate_patch(ctx, budget, by_source)
+        patch, usage, errors = generate_patch(ctx, budget, by_source, model_key)
     except Exception as exc:  # noqa: BLE001 -- one instance's API failure shouldn't kill the sweep
         return {
             "instance_id": row["instance_id"], "policy": policy, "budget": budget, "seed": seed,
@@ -551,6 +654,9 @@ def main() -> None:
     ap.add_argument("--policies", nargs="+", default=["oracle"], choices=list(CONTEXT_POLICIES))
     ap.add_argument("--budgets", nargs="+", type=int, default=[8000])
     ap.add_argument("--repeats", type=int, default=1)
+    ap.add_argument("--seed-start", type=int, default=0, help="first repeat index (lets you extend an existing tag's repeats without recomputing r0..)")
+    ap.add_argument("--model", default="deepseek", choices=list(MODEL_SPECS), help="downstream model that turns context into a patch")
+    ap.add_argument("--retriever", default="tfidf", choices=["tfidf", "embedding"], help="first-stage retrieval algorithm 'ours' uses (default: tfidf); embedding needs OPENAI_API_KEY")
     ap.add_argument("--tag", required=True, help="label for this run's predictions/report files")
     args = ap.parse_args()
 
@@ -568,13 +674,26 @@ def main() -> None:
     all_results = json.loads(RESULTS_PATH.read_text()) if RESULTS_PATH.exists() else []
     for policy in args.policies:
         for budget in args.budgets:
-            for seed in range(args.repeats):
-                cond_tag = f"{args.tag}_{policy}_{budget}_r{seed}"
-                print(f"--- {cond_tag} ---")
+            for seed in range(args.seed_start, args.seed_start + args.repeats):
+                # Only suffix non-default model/retriever so every existing
+                # tag in results.json (all generated at the defaults) keeps
+                # its exact name -- but two runs that only differ by model
+                # or retriever must never collide on the same tag, or one
+                # silently overwrites the other's on-disk prediction/report
+                # files (confirmed: happened for real between a --model gpt
+                # and --model gemini run that both used --tag modelswap
+                # before this suffixing existed).
+                suffix = ""
+                if args.model != "deepseek":
+                    suffix += f"_{args.model}"
+                if args.retriever != "tfidf":
+                    suffix += f"_{args.retriever}"
+                cond_tag = f"{args.tag}_{policy}_{budget}_r{seed}{suffix}"
+                print(f"--- {cond_tag} (model={args.model}, retriever={args.retriever}) ---")
                 records = []
                 for row in rows:
                     iid = row["instance_id"]
-                    rec = run_one(row, stores[iid], repo_dirs[iid], policy, budget, seed)
+                    rec = run_one(row, stores[iid], repo_dirs[iid], policy, budget, seed, args.model, args.retriever)
                     print(f"  {iid:30s} ctx={rec['context_tokens']:5d}tok applies={rec['applies']}")
                     records.append(rec)
                 predictions = [
@@ -588,7 +707,7 @@ def main() -> None:
                 print(f"  resolved={sorted(resolved)}")
                 all_results.append({
                     "tag": cond_tag, "policy": policy, "budget": budget, "seed": seed,
-                    "records": records, "harness": harness,
+                    "model": args.model, "retriever": args.retriever, "records": records, "harness": harness,
                 })
                 RESULTS_PATH.write_text(json.dumps(all_results, indent=2, default=str))
 

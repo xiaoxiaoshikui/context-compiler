@@ -1,10 +1,17 @@
+import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from context_compiler import ContextStore
 from context_compiler.models import ContextItem, ContextKind
-from context_compiler.retrieval import FTSRetriever, TfidfRetriever, augment_with_critical_items
+from context_compiler.retrieval import (
+    EmbeddingRetriever,
+    FTSRetriever,
+    TfidfRetriever,
+    augment_with_critical_items,
+)
 
 
 def _item(item_id: str, title: str, content: str, **kwargs) -> ContextItem:
@@ -78,6 +85,85 @@ class AugmentWithCriticalItemsTests(unittest.TestCase):
         pool = [ranked[0], _item("b", "b.py", "unrelated code", importance=0.1)]
         result = augment_with_critical_items(ranked, pool)
         self.assertEqual({i.id for i in result}, {"a"})
+
+
+class _FakeEmbeddingsResponse:
+    def __init__(self, payload: bytes):
+        self._payload = payload
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def read(self):
+        return self._payload
+
+
+def _mock_urlopen_returning(vector_for) -> mock.Mock:
+    """Builds a urlopen replacement for a fake /embeddings endpoint.
+
+    `vector_for(text) -> list[float]` decides the fake embedding for each
+    string in the request's "input" list, so tests can control similarity
+    without a real API call.
+    """
+
+    def _urlopen(req, timeout=60):
+        body = json.loads(req.data.decode("utf-8"))
+        data = [{"embedding": vector_for(text)} for text in body["input"]]
+        return _FakeEmbeddingsResponse(json.dumps({"data": data}).encode("utf-8"))
+
+    return mock.Mock(side_effect=_urlopen)
+
+
+class EmbeddingRetrieverTests(unittest.TestCase):
+    def _vector_for(self, text: str) -> list[float]:
+        if "oauth safari callback handler" in text:
+            return [1.0, 0.0]
+        if "totally different subject matter" in text:
+            return [0.0, 1.0]
+        if text == "fix the safari oauth callback":
+            return [1.0, 0.0]
+        return [0.5, 0.5]
+
+    def test_ranks_by_real_cosine_similarity_not_lexical_overlap(self):
+        items = [
+            _item("zero-overlap", "unrelated.py", "totally different subject matter"),
+            _item("relevant", "auth.py", "oauth safari callback handler"),
+        ]
+        mock_urlopen = _mock_urlopen_returning(self._vector_for)
+        with mock.patch("context_compiler.retrieval.urllib.request.urlopen", mock_urlopen):
+            retriever = EmbeddingRetriever(api_key="test-key")
+            ranked = retriever.rank("fix the safari oauth callback", items, limit=10)
+        self.assertEqual(ranked[0].id, "relevant")
+
+    def test_caches_item_embeddings_across_repeated_calls(self):
+        items = [_item("a", "a.py", "oauth safari callback handler")]
+        mock_urlopen = _mock_urlopen_returning(self._vector_for)
+        with mock.patch("context_compiler.retrieval.urllib.request.urlopen", mock_urlopen):
+            retriever = EmbeddingRetriever(api_key="test-key")
+            retriever.rank("fix the safari oauth callback", items, limit=10)
+            calls_after_first = mock_urlopen.call_count
+            retriever.rank("a different query entirely", items, limit=10)
+            calls_after_second = mock_urlopen.call_count
+        # Second rank() should only embed the (uncached) query, not re-embed
+        # the already-cached item -- one more urlopen call, not two.
+        self.assertEqual(calls_after_second - calls_after_first, 1)
+
+    def test_missing_api_key_raises_instead_of_silently_calling_out(self):
+        with mock.patch.dict("os.environ", {}, clear=True):
+            retriever = EmbeddingRetriever(api_key=None)
+            with self.assertRaises(RuntimeError):
+                retriever.rank("anything", [_item("a", "a.py", "content")], limit=10)
+
+    def test_empty_item_list_returns_empty_without_any_call(self):
+        mock_urlopen = _mock_urlopen_returning(self._vector_for)
+        with mock.patch("context_compiler.retrieval.urllib.request.urlopen", mock_urlopen):
+            retriever = EmbeddingRetriever(api_key="test-key")
+            result = retriever.rank("anything", [], limit=10)
+        self.assertEqual(result, [])
+        mock_urlopen.assert_not_called()
 
 
 class FTSRetrieverTests(unittest.TestCase):

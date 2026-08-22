@@ -470,3 +470,77 @@ continued" section; summary here:
   `deepseek-v4-pro` has generic pretraining knowledge of Flask's later
   evolution but not exact recall of this historical commit, confirming
   provided context still carries real grounding value here.
+
+## 2026-08-22 (session 8): testing the diagnosis, not just stating it
+
+Per explicit instruction to try other approaches and test multiple
+algorithms/ideas at scale rather than continuing to tune context
+-construction alone. Full writeup in `benchmarks/README.md`'s "testing
+the diagnosis instead of just stating it" section.
+
+- Generalized `benchmarks/real_eval.py` to a multi-provider `call_model()`
+  dispatcher (`MODEL_SPECS` dict; `--model deepseek|gpt|gemini|claude`),
+  keeping DeepSeek's hard-won retry/timeout defenses and extending them
+  to Gemini after confirming it has the identical reasoning-budget
+  -exhaustion failure mode (a trivial prompt at `max_tokens=20` returned
+  empty content with `finish_reason=length`). Claude uses the official
+  `anthropic` SDK per this project's Claude-integration convention (see
+  `llm_judge_eval.py`), GPT/Gemini use stdlib `urllib` against their
+  OpenAI-compatible endpoints (no new required dependency, matching the
+  existing DeepSeek precedent).
+- **Model-swap result**: identical context (every context-construction
+  fix applied), identical budget/instances, only the model swapped --
+  DeepSeek 0/6 + 0/6, GPT-5.2 1/6, Gemini-pro-latest 2/6 (1 repeat each
+  for gpt/gemini so far). `pytest` resolved for the first time across
+  every run collected in this evaluation (0/8 with DeepSeek across every
+  fix stage) the moment the model changed to Gemini with the *exact
+  same* compiled context -- direct evidence for the "downstream of
+  context construction" diagnosis from session 7. Claude untested: the
+  `ANTHROPIC_API_KEY` available here returned `400 credit balance too
+  low` -- external billing blocker, not a code issue.
+- Added `EmbeddingRetriever` to `src/context_compiler/retrieval.py` (real
+  OpenAI `text-embedding-3-small` cosine similarity via stdlib `urllib`,
+  in-memory cache by item id, batch size tuned to 64 items / 2000 chars
+  after hitting OpenAI's 300k-tokens-per-request cap at the first,
+  larger batch size tried). 4 new unit tests
+  (`tests/test_retrieval.py::EmbeddingRetrieverTests`, fully mocked, no
+  real network calls) covering ranking-by-similarity, the cross-call
+  cache, the missing-api-key error path, and the empty-input short
+  -circuit. Wired into both `benchmarks/run.py --retriever embedding` and
+  `benchmarks/real_eval.py --retriever embedding`.
+- **Retrieval-swap result (rank check)**: byte-identical output to
+  TF-IDF on the synthetic benchmark (too saturated/easy to show a
+  difference -- a known limitation of that benchmark, not a null
+  result). Directly re-ranking the 6 real instances' actual gold-patch
+  fix files: astropy rank 6->3, pytest 2->1, flask 8->7 (all real
+  improvements), django/requests unchanged (already near-top), pylint
+  19->not in top 200 (a real regression, not yet explained). Full
+  harness evaluation (does the astropy ranking gain flip its
+  resolved/unresolved verdict) queued as the next real-execution run.
+- Found and fixed a real tagging bug while running the model-swap
+  experiments: `real_eval.py`'s condition tag didn't encode which model
+  or retriever produced it, so two runs differing only by `--model`
+  silently collided on the same on-disk prediction/report file path --
+  confirmed directly (a `--model gemini` run overwrote the preceding
+  `--model gpt` run's files on disk, though both results were already
+  safely captured in `real_eval_results.json` by the time this was
+  caught). Fixed by suffixing the tag with model/retriever whenever
+  either is non-default; every existing default-config tag keeps its
+  exact name.
+- `python -m unittest discover -s tests -v`: 61/61 PASS (57 + 4 new).
+- Ran the full harness for the retrieval swap (same DeepSeek model, same
+  8k budget, same 6 instances, `--retriever embedding` vs the 8 prior
+  TF-IDF runs): **2/6** (`flask`, `requests`) then **1/6** (`requests`).
+  Real, if small-sample, improvement over TF-IDF's 4-resolved-across-8
+  -runs baseline (3 resolved across these 2 runs alone). Notably,
+  `astropy` -- the instance whose rank improved the most (6 -> 3) --
+  still did not resolve (patch applied both times, hidden tests still
+  failed); `flask` (a smaller rank gain, 8 -> 7) is what actually
+  flipped. Combined with the model-swap result above, this session's
+  conclusion is that the gap is **not either/or**: swapping only the
+  model and swapping only the retriever each independently improved the
+  rate on the same fixed other variable, meaning context-selection
+  quality was never fully exonerated by session 7's diagnosis -- it just
+  hadn't been tested in isolation from rendering fidelity until now.
+- Regenerated `benchmarks/charts/real_eval_model_swap.svg` and
+  `benchmarks/charts/real_eval_retriever_swap.svg`.

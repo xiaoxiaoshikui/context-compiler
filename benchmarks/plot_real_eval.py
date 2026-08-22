@@ -92,6 +92,65 @@ def main() -> None:
     (CHARTS_DIR / "real_eval_method_comparison.svg").write_text(svg)
     print("wrote", CHARTS_DIR / "real_eval_method_comparison.svg")
 
+    # --- Chart 3: same context, different downstream model ---
+    # The direct test of "is the gap really about context, or about the
+    # model/patch-synthesis step downstream of it" -- everything else
+    # (context construction: topk3, i.e. every fix in this repo's history;
+    # budget; instances) held fixed, only the model that turns context
+    # into a patch changes.
+    deepseek_runs = [resolved_count(f"topk3_ours_{budget}_r{i}") for i in (0, 1)]
+    # gpt and gemini share a tag+seed (both "modelswap_ours_8000_r0") but
+    # differ by "model" -- the tag-keyed `data` dict above collides on
+    # that, so look these two up directly by scanning the raw list.
+    model_counts = {}
+    for c in json.loads(RESULTS_PATH.read_text()):
+        if c["tag"] == "modelswap_ours_8000_r0":
+            model_counts[c.get("model", "?")] = len(c["harness"].get("resolved_ids", []))
+    svg = bar_chart_svg(
+        title="Same context, different downstream model -- is the gap really about context?",
+        subtitle=(
+            f"Identical compiled context (every context-construction fix applied), identical "
+            f"budget ({budget:,} tokens), identical 6 instances -- only the model synthesizing "
+            f"the patch changes. DeepSeek: 2 repeats already collected. GPT-5.2 / Gemini: 1 "
+            f"repeat each so far. Higher = better (resolved out of {n_tasks})."
+        ),
+        categories=["DeepSeek r0", "DeepSeek r1", "GPT-5.2 r0", "Gemini r0"],
+        series=[("resolved", "#2563eb", [
+            deepseek_runs[0], deepseek_runs[1],
+            model_counts.get("gpt", 0), model_counts.get("gemini", 0),
+        ])],
+        y_label=f"instances resolved (of {n_tasks})",
+    )
+    (CHARTS_DIR / "real_eval_model_swap.svg").write_text(svg)
+    print("wrote", CHARTS_DIR / "real_eval_model_swap.svg")
+
+    # --- Chart 4: same model, different retrieval algorithm ---
+    # The other half of "where's the problem" -- hold the model fixed
+    # (DeepSeek throughout), swap only the first-stage retriever that
+    # decides which ~200 candidates exist before any scoring/rendering
+    # runs at all.
+    tfidf_tags = ["full4_ours_8000_r0", "full4_ours_8000_r1",
+                  "topk1_ours_8000_r0", "topk1_ours_8000_r1",
+                  "topk2_ours_8000_r0", "topk2_ours_8000_r1",
+                  "topk3_ours_8000_r0", "topk3_ours_8000_r1"]
+    tfidf_counts = [resolved_count(t) for t in tfidf_tags]
+    embed_counts = [resolved_count("embed_ours_8000_r0"), resolved_count("embed_ours_8000_r1")]
+    svg = bar_chart_svg(
+        title="Same model, different retrieval algorithm -- TF-IDF vs real embeddings",
+        subtitle=(
+            f"DeepSeek throughout, identical budget ({budget:,} tokens), identical 6 instances -- "
+            f"only context_compiler's first-stage retriever changes. TF-IDF bars are every 'ours' "
+            f"run across every context-construction fix stage in this file (8 runs); Embedding is "
+            f"EmbeddingRetriever (real OpenAI embeddings), 2 repeats so far. Higher = better "
+            f"(resolved out of {n_tasks})."
+        ),
+        categories=[f"TF-IDF r{i}" for i in range(len(tfidf_counts))] + ["Embedding r0", "Embedding r1"],
+        series=[("resolved", "#2563eb", tfidf_counts + embed_counts)],
+        y_label=f"instances resolved (of {n_tasks})",
+    )
+    (CHARTS_DIR / "real_eval_retriever_swap.svg").write_text(svg)
+    print("wrote", CHARTS_DIR / "real_eval_retriever_swap.svg")
+
 
 if __name__ == "__main__":
     main()

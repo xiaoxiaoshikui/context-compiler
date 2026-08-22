@@ -486,6 +486,40 @@ running it (concurrent runs silently broke DNS resolution; a reasoning
 model can burn its whole token budget "thinking" about incoherent
 context and answer nothing at all).
 
+**Experiment 3 — testing that diagnosis instead of just stating it.**
+"Downstream of context construction" is a hypothesis, not a fact, until
+it's tested against an alternative. Two direct tests, holding everything
+else fixed:
+
+![Same context, different model](benchmarks/charts/real_eval_model_swap.svg)
+
+Hold context fixed, swap only the downstream model: DeepSeek 0/6 + 0/6,
+GPT-5.2 1/6, Gemini-pro-latest 2/6 (1 repeat each for gpt/gemini so far)
+— on the *identical* compiled context. `pytest` resolved for the first
+time across every run this evaluation has ever collected (0/8 with
+DeepSeek across every fix stage) the moment the model changed to Gemini.
+Real support for the model-capability half of the diagnosis.
+
+![Same model, different retriever](benchmarks/charts/real_eval_retriever_swap.svg)
+
+Hold the model fixed (DeepSeek throughout), swap only `context_compiler`'s
+own first-stage retriever — TF-IDF (the default; 4 resolved across the 8
+runs above) vs. a new real-embeddings `EmbeddingRetriever` (2/6 then
+1/6 — 3 resolved across just 2 runs). Both swaps independently improved
+the rate on the same fixed other variable — the honest conclusion is
+**not either/or**: model capability and retrieval quality both carry
+real signal at this sample size, and context-selection quality was never
+fully exonerated, just untested in isolation from rendering fidelity
+until now. Claude (`claude-sonnet-5`) is not yet in this comparison — the
+`ANTHROPIC_API_KEY` available when this was run had insufficient credit
+balance, an external billing blocker, not a code issue. Full writeup,
+including the one real regression found (a widely-imported module's fix
+file fell out of the embedding retriever's candidate pool entirely) and
+a real tagging bug this work surfaced and fixed (two runs differing only
+by `--model` silently collided on the same on-disk output files), in
+`benchmarks/README.md`'s "testing the diagnosis instead of just stating
+it" section.
+
 ```bash
 python3 -m venv .venv_realeval && source .venv_realeval/bin/activate
 pip install -e . pyarrow "swebench>=3,<4"   # + Docker running, DEEPSEEK_API_KEY set

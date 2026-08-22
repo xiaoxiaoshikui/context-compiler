@@ -1,0 +1,3572 @@
+[
+  {
+    "slug": "oauth_safari",
+    "task": "Fix the Safari OAuth callback regression; preserve the no-replay security invariant",
+    "methods": {
+      "ours": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 68.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 136.0,
+            "mean_items": 2.0
+          },
+          {
+            "budget": 250,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 248.0,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 400,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 382.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 700,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 382.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 1200,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 382.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 2000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 382.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 3000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 382.0,
+            "mean_items": 5.0
+          }
+        ],
+        "b95": 150
+      },
+      "full": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 65.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 138.0,
+            "mean_items": 2.0
+          },
+          {
+            "budget": 250,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 231.0,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 400,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 355.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 700,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 355.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 1200,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 355.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 2000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 355.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 3000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 355.0,
+            "mean_items": 5.0
+          }
+        ],
+        "b95": 150
+      },
+      "random": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 20,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 65.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 20,
+            "successes": 5,
+            "success_rate": 0.25,
+            "mean_score": 0.25,
+            "mean_used_tokens": 129.25,
+            "mean_items": 1.75
+          },
+          {
+            "budget": 250,
+            "runs": 20,
+            "successes": 10,
+            "success_rate": 0.5,
+            "mean_score": 0.5,
+            "mean_used_tokens": 222.2,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 400,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 355.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 700,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 355.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 1200,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 355.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 2000,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 355.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 3000,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 355.0,
+            "mean_items": 5.0
+          }
+        ],
+        "b95": 400
+      }
+    },
+    "oracle_tokens": 73
+  },
+  {
+    "slug": "payment_idempotency",
+    "task": "Fix duplicate customer charges when the payment gateway times out",
+    "methods": {
+      "ours": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 68.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 150.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 250,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 236.0,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 400,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 400.0,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 700,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 692.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 1200,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 767.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 2000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 767.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 3000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 767.0,
+            "mean_items": 6.0
+          }
+        ],
+        "b95": 150
+      },
+      "full": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 19.0,
+            "mean_items": 0.0
+          },
+          {
+            "budget": 150,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 141.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 250,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 241.0,
+            "mean_items": 2.0
+          },
+          {
+            "budget": 400,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 241.0,
+            "mean_items": 2.0
+          },
+          {
+            "budget": 700,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 656.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 1200,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 740.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 2000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 740.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 3000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 740.0,
+            "mean_items": 6.0
+          }
+        ],
+        "b95": 150
+      },
+      "random": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 20,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 19.0,
+            "mean_items": 0.0
+          },
+          {
+            "budget": 150,
+            "runs": 20,
+            "successes": 8,
+            "success_rate": 0.4,
+            "mean_score": 0.4,
+            "mean_used_tokens": 122.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 250,
+            "runs": 20,
+            "successes": 2,
+            "success_rate": 0.1,
+            "mean_score": 0.1,
+            "mean_used_tokens": 216.05,
+            "mean_items": 1.85
+          },
+          {
+            "budget": 400,
+            "runs": 20,
+            "successes": 11,
+            "success_rate": 0.55,
+            "mean_score": 0.55,
+            "mean_used_tokens": 361.2,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 700,
+            "runs": 20,
+            "successes": 17,
+            "success_rate": 0.85,
+            "mean_score": 0.85,
+            "mean_used_tokens": 619.65,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 1200,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 740.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 2000,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 740.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 3000,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 740.0,
+            "mean_items": 6.0
+          }
+        ],
+        "b95": 1200
+      }
+    },
+    "oracle_tokens": 104
+  },
+  {
+    "slug": "db_migration",
+    "task": "Add a migration that drops the legacy sessions_v1 table",
+    "methods": {
+      "ours": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 68.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 147.0,
+            "mean_items": 2.0
+          },
+          {
+            "budget": 250,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 243.0,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 400,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 397.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 700,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 647.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 1200,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 647.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 2000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 647.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 3000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 647.0,
+            "mean_items": 6.0
+          }
+        ],
+        "b95": 250
+      },
+      "full": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 18.0,
+            "mean_items": 0.0
+          },
+          {
+            "budget": 150,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 147.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 250,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 217.0,
+            "mean_items": 2.0
+          },
+          {
+            "budget": 400,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 287.0,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 700,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 620.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 1200,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 620.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 2000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 620.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 3000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 620.0,
+            "mean_items": 6.0
+          }
+        ],
+        "b95": 150
+      },
+      "random": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 20,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 18.0,
+            "mean_items": 0.0
+          },
+          {
+            "budget": 150,
+            "runs": 20,
+            "successes": 10,
+            "success_rate": 0.5,
+            "mean_score": 0.5,
+            "mean_used_tokens": 122.45,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 250,
+            "runs": 20,
+            "successes": 7,
+            "success_rate": 0.35,
+            "mean_score": 0.35,
+            "mean_used_tokens": 219.15,
+            "mean_items": 2.15
+          },
+          {
+            "budget": 400,
+            "runs": 20,
+            "successes": 7,
+            "success_rate": 0.35,
+            "mean_score": 0.35,
+            "mean_used_tokens": 357.35,
+            "mean_items": 3.6
+          },
+          {
+            "budget": 700,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 620.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 1200,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 620.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 2000,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 620.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 3000,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 620.0,
+            "mean_items": 6.0
+          }
+        ],
+        "b95": 700
+      }
+    },
+    "oracle_tokens": 111
+  },
+  {
+    "slug": "rate_limit",
+    "task": "Debug why legitimate users are being rate-limited during a traffic spike",
+    "methods": {
+      "ours": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 68.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 137.0,
+            "mean_items": 2.0
+          },
+          {
+            "budget": 250,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 235.0,
+            "mean_items": 2.0
+          },
+          {
+            "budget": 400,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 391.0,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 700,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 618.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 1200,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 618.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 2000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 618.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 3000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 618.0,
+            "mean_items": 6.0
+          }
+        ],
+        "b95": 250
+      },
+      "full": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 22.0,
+            "mean_items": 0.0
+          },
+          {
+            "budget": 150,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 129.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 250,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 180.0,
+            "mean_items": 2.0
+          },
+          {
+            "budget": 400,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 272.0,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 700,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 591.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 1200,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 591.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 2000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 591.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 3000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 591.0,
+            "mean_items": 6.0
+          }
+        ],
+        "b95": 150
+      },
+      "random": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 20,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 73.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 20,
+            "successes": 5,
+            "success_rate": 0.25,
+            "mean_score": 0.25,
+            "mean_used_tokens": 116.8,
+            "mean_items": 1.1
+          },
+          {
+            "budget": 250,
+            "runs": 20,
+            "successes": 7,
+            "success_rate": 0.35,
+            "mean_score": 0.35,
+            "mean_used_tokens": 236.5,
+            "mean_items": 2.8
+          },
+          {
+            "budget": 400,
+            "runs": 20,
+            "successes": 15,
+            "success_rate": 0.75,
+            "mean_score": 0.75,
+            "mean_used_tokens": 357.0,
+            "mean_items": 3.65
+          },
+          {
+            "budget": 700,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 591.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 1200,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 591.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 2000,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 591.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 3000,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 591.0,
+            "mean_items": 6.0
+          }
+        ],
+        "b95": 700
+      }
+    },
+    "oracle_tokens": 107
+  },
+  {
+    "slug": "secrets_rotation",
+    "task": "Rotate the expired API key used by the billing webhook",
+    "methods": {
+      "ours": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 68.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 144.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 250,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 249.0,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 400,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 400.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 700,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 472.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 1200,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 472.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 2000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 472.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 3000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 472.0,
+            "mean_items": 6.0
+          }
+        ],
+        "b95": 150
+      },
+      "full": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 60.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 60.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 250,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 246.0,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 400,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 325.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 700,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 445.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 1200,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 445.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 2000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 445.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 3000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 445.0,
+            "mean_items": 6.0
+          }
+        ],
+        "b95": 250
+      },
+      "random": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 20,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 61.3,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 20,
+            "successes": 4,
+            "success_rate": 0.2,
+            "mean_score": 0.2,
+            "mean_used_tokens": 130.7,
+            "mean_items": 1.8
+          },
+          {
+            "budget": 250,
+            "runs": 20,
+            "successes": 11,
+            "success_rate": 0.55,
+            "mean_score": 0.55,
+            "mean_used_tokens": 231.55,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 400,
+            "runs": 20,
+            "successes": 16,
+            "success_rate": 0.8,
+            "mean_score": 0.8,
+            "mean_used_tokens": 360.6,
+            "mean_items": 4.95
+          },
+          {
+            "budget": 700,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 445.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 1200,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 445.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 2000,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 445.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 3000,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 445.0,
+            "mean_items": 6.0
+          }
+        ],
+        "b95": 700
+      }
+    },
+    "oracle_tokens": 98
+  },
+  {
+    "slug": "db_pool_timeout",
+    "task": "Diagnose why orders-api requests intermittently fail with 'timed out waiting for a database connection' during peak traffic",
+    "methods": {
+      "ours": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 70.0,
+            "mean_items": 2.0
+          },
+          {
+            "budget": 150,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 148.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 250,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 241.0,
+            "mean_items": 2.0
+          },
+          {
+            "budget": 400,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 313.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 700,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 313.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 1200,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 313.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 2000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 313.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 3000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 313.0,
+            "mean_items": 4.0
+          }
+        ],
+        "b95": 400
+      },
+      "full": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 65.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 65.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 250,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 249.0,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 400,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 286.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 700,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 286.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 1200,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 286.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 2000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 286.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 3000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 286.0,
+            "mean_items": 4.0
+          }
+        ],
+        "b95": 400
+      },
+      "random": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 20,
+            "successes": 7,
+            "success_rate": 0.35,
+            "mean_score": 0.35,
+            "mean_used_tokens": 65.7,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 20,
+            "successes": 10,
+            "success_rate": 0.5,
+            "mean_score": 0.5,
+            "mean_used_tokens": 134.1,
+            "mean_items": 1.7
+          },
+          {
+            "budget": 250,
+            "runs": 20,
+            "successes": 14,
+            "success_rate": 0.7,
+            "mean_score": 0.7,
+            "mean_used_tokens": 208.5,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 400,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 286.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 700,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 286.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 1200,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 286.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 2000,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 286.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 3000,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 286.0,
+            "mean_items": 4.0
+          }
+        ],
+        "b95": 400
+      }
+    },
+    "oracle_tokens": 37
+  },
+  {
+    "slug": "feature_flag_rollout",
+    "task": "Explain why only some users see the new checkout flow after it was marked enabled",
+    "methods": {
+      "ours": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 79.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 142.0,
+            "mean_items": 2.0
+          },
+          {
+            "budget": 250,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 246.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 400,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 246.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 700,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 246.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 1200,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 246.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 2000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 246.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 3000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 246.0,
+            "mean_items": 4.0
+          }
+        ],
+        "b95": 150
+      },
+      "full": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 58.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 123.0,
+            "mean_items": 2.0
+          },
+          {
+            "budget": 250,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 219.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 400,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 219.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 700,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 219.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 1200,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 219.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 2000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 219.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 3000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 219.0,
+            "mean_items": 4.0
+          }
+        ],
+        "b95": 250
+      },
+      "random": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 20,
+            "successes": 6,
+            "success_rate": 0.3,
+            "mean_score": 0.3,
+            "mean_used_tokens": 56.5,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 20,
+            "successes": 14,
+            "success_rate": 0.7,
+            "mean_score": 0.7,
+            "mean_used_tokens": 112.55,
+            "mean_items": 2.0
+          },
+          {
+            "budget": 250,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 219.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 400,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 219.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 700,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 219.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 1200,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 219.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 2000,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 219.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 3000,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 219.0,
+            "mean_items": 4.0
+          }
+        ],
+        "b95": 250
+      }
+    },
+    "oracle_tokens": 29
+  },
+  {
+    "slug": "rate_config_mismatch",
+    "task": "Investigate why the billing client raises a timeout error even though the billing service itself responds within 400ms",
+    "methods": {
+      "ours": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 76.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 147.0,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 250,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 239.0,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 400,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 356.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 700,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 356.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 1200,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 356.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 2000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 356.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 3000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 356.0,
+            "mean_items": 4.0
+          }
+        ],
+        "b95": 400
+      },
+      "full": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 69.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 69.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 250,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 218.0,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 400,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 329.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 700,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 329.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 1200,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 329.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 2000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 329.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 3000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 329.0,
+            "mean_items": 4.0
+          }
+        ],
+        "b95": 250
+      },
+      "random": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 20,
+            "successes": 6,
+            "success_rate": 0.3,
+            "mean_score": 0.3,
+            "mean_used_tokens": 64.5,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 20,
+            "successes": 14,
+            "success_rate": 0.7,
+            "mean_score": 0.7,
+            "mean_used_tokens": 108.2,
+            "mean_items": 1.7
+          },
+          {
+            "budget": 250,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 212.0,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 400,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 329.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 700,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 329.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 1200,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 329.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 2000,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 329.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 3000,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 329.0,
+            "mean_items": 4.0
+          }
+        ],
+        "b95": 250
+      }
+    },
+    "oracle_tokens": 31
+  },
+  {
+    "slug": "cache_ttl",
+    "task": "Explain why cached prices shown to users are sometimes stale for up to half a minute after an admin updates a price",
+    "methods": {
+      "ours": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 70.0,
+            "mean_items": 2.0
+          },
+          {
+            "budget": 150,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 135.0,
+            "mean_items": 2.0
+          },
+          {
+            "budget": 250,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 242.0,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 400,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 388.0,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 700,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 421.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 1200,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 421.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 2000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 421.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 3000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 421.0,
+            "mean_items": 4.0
+          }
+        ],
+        "b95": 400
+      },
+      "full": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 64.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 124.0,
+            "mean_items": 2.0
+          },
+          {
+            "budget": 250,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 124.0,
+            "mean_items": 2.0
+          },
+          {
+            "budget": 400,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 394.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 700,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 394.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 1200,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 394.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 2000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 394.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 3000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 394.0,
+            "mean_items": 4.0
+          }
+        ],
+        "b95": 400
+      },
+      "random": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 20,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 64.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 20,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 130.0,
+            "mean_items": 1.6
+          },
+          {
+            "budget": 250,
+            "runs": 20,
+            "successes": 10,
+            "success_rate": 0.5,
+            "mean_score": 0.5,
+            "mean_used_tokens": 229.0,
+            "mean_items": 2.5
+          },
+          {
+            "budget": 400,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 394.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 700,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 394.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 1200,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 394.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 2000,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 394.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 3000,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 394.0,
+            "mean_items": 4.0
+          }
+        ],
+        "b95": 400
+      }
+    },
+    "oracle_tokens": 153
+  },
+  {
+    "slug": "retry_backoff",
+    "task": "Explain why a downstream outage causes this service's requests to back off for several seconds before giving up entirely",
+    "methods": {
+      "ours": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 76.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 147.0,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 250,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 246.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 400,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 391.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 700,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 391.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 1200,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 391.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 2000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 391.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 3000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 391.0,
+            "mean_items": 5.0
+          }
+        ],
+        "b95": 400
+      },
+      "full": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 62.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 150.0,
+            "mean_items": 2.0
+          },
+          {
+            "budget": 250,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 150.0,
+            "mean_items": 2.0
+          },
+          {
+            "budget": 400,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 364.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 700,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 364.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 1200,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 364.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 2000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 364.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 3000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 364.0,
+            "mean_items": 5.0
+          }
+        ],
+        "b95": 150
+      },
+      "random": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 20,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 65.6,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 20,
+            "successes": 4,
+            "success_rate": 0.2,
+            "mean_score": 0.2,
+            "mean_used_tokens": 130.05,
+            "mean_items": 1.8
+          },
+          {
+            "budget": 250,
+            "runs": 20,
+            "successes": 11,
+            "success_rate": 0.55,
+            "mean_score": 0.55,
+            "mean_used_tokens": 211.3,
+            "mean_items": 2.9
+          },
+          {
+            "budget": 400,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 364.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 700,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 364.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 1200,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 364.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 2000,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 364.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 3000,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 364.0,
+            "mean_items": 5.0
+          }
+        ],
+        "b95": 400
+      }
+    },
+    "oracle_tokens": 75
+  },
+  {
+    "slug": "pagination_limit",
+    "task": "Explain why a customer with 40 orders only sees 25 of them in the export tool",
+    "methods": {
+      "ours": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 70.0,
+            "mean_items": 2.0
+          },
+          {
+            "budget": 150,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 150.0,
+            "mean_items": 2.0
+          },
+          {
+            "budget": 250,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 239.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 400,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 319.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 700,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 319.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 1200,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 319.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 2000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 319.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 3000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 319.0,
+            "mean_items": 4.0
+          }
+        ],
+        "b95": 150
+      },
+      "full": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 59.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 59.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 250,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 222.0,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 400,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 292.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 700,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 292.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 1200,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 292.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 2000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 292.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 3000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 292.0,
+            "mean_items": 4.0
+          }
+        ],
+        "b95": 400
+      },
+      "random": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 20,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 59.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 20,
+            "successes": 9,
+            "success_rate": 0.45,
+            "mean_score": 0.45,
+            "mean_used_tokens": 125.45,
+            "mean_items": 1.8
+          },
+          {
+            "budget": 250,
+            "runs": 20,
+            "successes": 11,
+            "success_rate": 0.55,
+            "mean_score": 0.55,
+            "mean_used_tokens": 210.55,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 400,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 292.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 700,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 292.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 1200,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 292.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 2000,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 292.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 3000,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 292.0,
+            "mean_items": 4.0
+          }
+        ],
+        "b95": 400
+      }
+    },
+    "oracle_tokens": 97
+  },
+  {
+    "slug": "queue_delivery_decision",
+    "task": "A teammate wants to switch the order events queue to at-most-once delivery to simplify consumer code -- evaluate it",
+    "methods": {
+      "ours": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 67.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 148.0,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 250,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 237.0,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 400,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 355.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 700,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 355.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 1200,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 355.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 2000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 355.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 3000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 355.0,
+            "mean_items": 4.0
+          }
+        ],
+        "b95": 250
+      },
+      "full": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 33.0,
+            "mean_items": 0.0
+          },
+          {
+            "budget": 150,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 139.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 250,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 179.0,
+            "mean_items": 2.0
+          },
+          {
+            "budget": 400,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 328.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 700,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 328.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 1200,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 328.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 2000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 328.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 3000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 328.0,
+            "mean_items": 4.0
+          }
+        ],
+        "b95": 150
+      },
+      "random": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 20,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 73.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 20,
+            "successes": 6,
+            "success_rate": 0.3,
+            "mean_score": 0.3,
+            "mean_used_tokens": 130.8,
+            "mean_items": 1.5
+          },
+          {
+            "budget": 250,
+            "runs": 20,
+            "successes": 12,
+            "success_rate": 0.6,
+            "mean_score": 0.6,
+            "mean_used_tokens": 228.65,
+            "mean_items": 2.95
+          },
+          {
+            "budget": 400,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 328.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 700,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 328.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 1200,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 328.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 2000,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 328.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 3000,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 328.0,
+            "mean_items": 4.0
+          }
+        ],
+        "b95": 400
+      }
+    },
+    "oracle_tokens": 106
+  },
+  {
+    "slug": "sync_vs_async_decision",
+    "task": "Propose moving email sending back into the synchronous request handler for lower latency -- evaluate it",
+    "methods": {
+      "ours": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 67.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 149.0,
+            "mean_items": 2.0
+          },
+          {
+            "budget": 250,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 250.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 400,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 380.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 700,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 380.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 1200,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 380.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 2000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 380.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 3000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 380.0,
+            "mean_items": 5.0
+          }
+        ],
+        "b95": 150
+      },
+      "full": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 26.0,
+            "mean_items": 0.0
+          },
+          {
+            "budget": 150,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 112.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 250,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 217.0,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 400,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 353.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 700,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 353.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 1200,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 353.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 2000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 353.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 3000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 353.0,
+            "mean_items": 5.0
+          }
+        ],
+        "b95": 150
+      },
+      "random": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 20,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 67.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 20,
+            "successes": 4,
+            "success_rate": 0.2,
+            "mean_score": 0.2,
+            "mean_used_tokens": 130.5,
+            "mean_items": 1.8
+          },
+          {
+            "budget": 250,
+            "runs": 20,
+            "successes": 12,
+            "success_rate": 0.6,
+            "mean_score": 0.6,
+            "mean_used_tokens": 221.45,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 400,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 353.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 700,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 353.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 1200,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 353.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 2000,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 353.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 3000,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 353.0,
+            "mean_items": 5.0
+          }
+        ],
+        "b95": 400
+      }
+    },
+    "oracle_tokens": 86
+  },
+  {
+    "slug": "soft_delete_decision",
+    "task": "Propose switching customer record deletion from soft delete to a hard SQL DELETE for simplicity -- evaluate it",
+    "methods": {
+      "ours": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 67.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 150.0,
+            "mean_items": 2.0
+          },
+          {
+            "budget": 250,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 237.0,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 400,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 301.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 700,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 301.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 1200,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 301.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 2000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 301.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 3000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 301.0,
+            "mean_items": 4.0
+          }
+        ],
+        "b95": 150
+      },
+      "full": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 28.0,
+            "mean_items": 0.0
+          },
+          {
+            "budget": 150,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 115.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 250,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 207.0,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 400,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 274.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 700,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 274.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 1200,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 274.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 2000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 274.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 3000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 274.0,
+            "mean_items": 4.0
+          }
+        ],
+        "b95": 150
+      },
+      "random": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 20,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 64.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 20,
+            "successes": 6,
+            "success_rate": 0.3,
+            "mean_score": 0.3,
+            "mean_used_tokens": 122.9,
+            "mean_items": 1.7
+          },
+          {
+            "budget": 250,
+            "runs": 20,
+            "successes": 16,
+            "success_rate": 0.8,
+            "mean_score": 0.8,
+            "mean_used_tokens": 217.05,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 400,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 274.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 700,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 274.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 1200,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 274.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 2000,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 274.0,
+            "mean_items": 4.0
+          },
+          {
+            "budget": 3000,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 274.0,
+            "mean_items": 4.0
+          }
+        ],
+        "b95": 400
+      }
+    },
+    "oracle_tokens": 87
+  },
+  {
+    "slug": "dependency_graph",
+    "task": "Customers are being sent payouts bigger than what they were originally charged at checkout; patch the endpoint so that stops happening",
+    "methods": {
+      "ours": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 73.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 141.0,
+            "mean_items": 2.0
+          },
+          {
+            "budget": 250,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 249.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 400,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 391.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 700,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 443.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 1200,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 443.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 2000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 443.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 3000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 443.0,
+            "mean_items": 6.0
+          }
+        ],
+        "b95": 250
+      },
+      "full": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 74.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 74.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 250,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 224.0,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 400,
+            "runs": 1,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 334.0,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 700,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 416.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 1200,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 416.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 2000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 416.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 3000,
+            "runs": 1,
+            "successes": 1,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 416.0,
+            "mean_items": 6.0
+          }
+        ],
+        "b95": 700
+      },
+      "random": {
+        "points": [
+          {
+            "budget": 80,
+            "runs": 20,
+            "successes": 0,
+            "success_rate": 0.0,
+            "mean_score": 0.0,
+            "mean_used_tokens": 74.0,
+            "mean_items": 1.0
+          },
+          {
+            "budget": 150,
+            "runs": 20,
+            "successes": 4,
+            "success_rate": 0.2,
+            "mean_score": 0.2,
+            "mean_used_tokens": 122.15,
+            "mean_items": 1.4
+          },
+          {
+            "budget": 250,
+            "runs": 20,
+            "successes": 4,
+            "success_rate": 0.2,
+            "mean_score": 0.2,
+            "mean_used_tokens": 215.3,
+            "mean_items": 3.0
+          },
+          {
+            "budget": 400,
+            "runs": 20,
+            "successes": 15,
+            "success_rate": 0.75,
+            "mean_score": 0.75,
+            "mean_used_tokens": 350.15,
+            "mean_items": 5.0
+          },
+          {
+            "budget": 700,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 416.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 1200,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 416.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 2000,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 416.0,
+            "mean_items": 6.0
+          },
+          {
+            "budget": 3000,
+            "runs": 20,
+            "successes": 20,
+            "success_rate": 1.0,
+            "mean_score": 1.0,
+            "mean_used_tokens": 416.0,
+            "mean_items": 6.0
+          }
+        ],
+        "b95": 700
+      }
+    },
+    "oracle_tokens": 116
+  }
+]

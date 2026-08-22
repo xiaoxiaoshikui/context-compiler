@@ -106,6 +106,10 @@ def load_learned_weights() -> ScoringWeights:
 def make_retriever(name: str, store: ContextStore) -> Retriever:
     if name == "fts":
         return FTSRetriever(store)
+    if name == "embedding":
+        from context_compiler.retrieval import EmbeddingRetriever
+
+        return EmbeddingRetriever()
     return TfidfRetriever()
 
 
@@ -222,11 +226,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     p.add_argument(
         "--retriever",
-        choices=["tfidf", "fts"],
+        choices=["tfidf", "fts", "embedding"],
         default="tfidf",
         help="tfidf (default; scores every candidate, never drops one on zero "
-        "exact-term overlap) or fts (the original SQLite FTS5 candidate_search, "
-        "kept for comparison -- see benchmarks/README.md Phase 3)",
+        "exact-term overlap), fts (the original SQLite FTS5 candidate_search, "
+        "kept for comparison -- see benchmarks/README.md Phase 3), or embedding "
+        "(real OpenAI embeddings, needs OPENAI_API_KEY, costs real money -- see "
+        "benchmarks/README.md 2026-08-22 continued)",
     )
     p.add_argument(
         "--graph",

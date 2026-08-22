@@ -777,6 +777,117 @@ while flagging that popular open-source repos carry some irreducible
 memorization risk in any SWE-bench-style evaluation, consistent with
 known contamination concerns in that literature.
 
+### 2026-08-22, continued again: testing the diagnosis instead of just stating it
+
+The conclusion above -- "the bottleneck is likely downstream of context
+construction, not selection/rendering" -- is a hypothesis, not a fact,
+until it's actually tested against an alternative. Two ways to test it
+directly: hold context fixed and swap the *model*; hold the model fixed
+and swap the *retrieval algorithm* underneath context construction
+itself (not just its rendering, which is all the fixes above touched).
+`real_eval.py` gained real support for both (`--model
+deepseek|gpt|gemini|claude`, `--retriever tfidf|embedding`) rather than
+one-off scripts, so these are now first-class, repeatable conditions.
+
+**Model swap: same context, different downstream model.** Every
+context-construction fix in this file applied, identical 6 instances,
+identical 8,000-token budget -- only the model that turns the compiled
+context into a patch changes:
+
+| Model | Resolved |
+|---|---|
+| `deepseek-v4-pro` (r0, r1) | 0/6, 0/6 |
+| `gpt-5.2` (r0) | 1/6 (`requests`) |
+| `gemini-pro-latest` (r0) | 2/6 (`requests`, `pytest`) |
+
+![Same context, different model](charts/real_eval_model_swap.svg)
+
+This is real, if still small-sample (1 repeat each for gpt/gemini so
+far), support for the diagnosis: `pytest` resolved for the *first time
+in every run collected across this entire evaluation* -- 0/8 with
+DeepSeek across every context-construction fix stage, then 1/1 the
+moment the model changed to Gemini, with the *exact same* compiled
+context both times. That's specifically a model-capability difference,
+not a context difference, because the input to the model was identical.
+`gemini-pro-latest` needed the same reasoning-budget-exhaustion defenses
+already built for DeepSeek (a trivial "say OK" prompt at `max_tokens=20`
+came back with empty content and `finish_reason=length` -- confirmed
+directly, the same failure mode, different provider). Claude
+(`claude-sonnet-5`) could not be tested: the `ANTHROPIC_API_KEY`
+available in this environment returned `400 credit balance too low` on
+the first call -- a billing blocker, not a code or context issue,
+recorded honestly as an untested condition rather than skipped silently.
+
+**Retrieval algorithm swap: TF-IDF vs. real embeddings.** Every rendering
+-level fix in this file operates *after* first-stage retrieval already
+decided which ~200 candidates exist at all -- none of it touches the
+retrieval algorithm itself. `EmbeddingRetriever`
+(`src/context_compiler/retrieval.py`) replaces `TfidfRetriever`'s lexical
+term-overlap proxy with real OpenAI `text-embedding-3-small` cosine
+similarity (stdlib `urllib`, no new required dependency, in-memory cache
+by item id). On the synthetic 15-task benchmark it produced
+byte-identical output to TF-IDF -- that benchmark is too easy/saturated
+to show a retrieval-quality difference (a limitation of the benchmark,
+already known; see "Honest limitations of this slice" above). Re-ranking
+the 6 real instances' *actual* gold-patch fix files directly (not yet
+full evaluation, just rank position) found a real, mixed effect:
+
+| Instance (fix file) | TF-IDF rank | Embedding rank |
+|---|---|---|
+| astropy (`separable.py`) | 6 | **3** |
+| pytest (`python.py`) | 2 | **1** |
+| flask (`blueprints.py`) | 8 | **7** |
+| django (`expressions.py`) | 0 | 0 |
+| requests (`sessions.py`) | 1 | 1 |
+| pylint (`expand_modules.py`) | 19 | **not in top 200** |
+
+Embeddings meaningfully improved 3 of 6 real rankings (astropy notably:
+rank 6 -> 3 moves it comfortably inside `top_k_full_text`'s forced-full
+-text cutoff, where at rank 6 it needed the cutoff raised all the way to
+7 to be reached at all), left 2 unchanged, and made 1 *worse* --
+`pylint`'s fix file dropped out of the candidate pool entirely under
+embedding-based retrieval, worse than TF-IDF's already-poor rank 19.
+Reported as-is: a real, useful signal on 3 instances is not the same as
+a strictly-better algorithm, and the pylint regression needs its own
+explanation before this could safely become the default (a plausible
+guess -- not yet confirmed -- is that `expand_modules.py`'s *content* is
+mostly argument-parsing boilerplate with little semantic content an
+embedding model would associate with "which files to expand while
+linting," where TF-IDF's exact-term matching on `expand`/`modules`
+happens to do better by accident).
+
+![Same model, different retriever](charts/real_eval_retriever_swap.svg)
+
+**Full harness result for the retrieval swap** (same DeepSeek model,
+same budget, same 6 instances, only `TfidfRetriever` -> `EmbeddingRetriever`):
+
+| Retriever | Run 1 | Run 2 |
+|---|---|---|
+| TF-IDF (8 `ours_8000` runs across every fix stage above) | 0,1,0,2,1,0,0,0 resolved | -- |
+| Embedding | 2/6 (`flask`, `requests`) | 1/6 (`requests`) |
+
+Real and encouraging, with the usual small-sample caveat: 3 resolved
+across these 2 embedding runs vs. 4 resolved across the 8 TF-IDF runs
+that preceded them (12.5% -> 25% per-instance-run rate). Notably,
+*astropy did not flip to resolved* despite its ranking improving the
+most (rank 6 -> 3) -- the patch applied both times but the hidden tests
+still failed, while `flask` (a smaller rank gain, 8 -> 7) is what
+actually flipped. That mismatch is itself informative: a better rank
+alone is not sufficient any more than the earlier fidelity fixes were --
+consistent with this whole evaluation's running theme that context
+-quality improvements and resolve-rate improvements are correlated but
+not tightly coupled at this sample size, since the model-side
+patch-synthesis step still sits between the two.
+
+Put together with the model-swap result above, this session's actual
+answer to "where's the problem" is **not either/or**: swapping only the
+model (DeepSeek -> Gemini, same TF-IDF context) improved the rate, and
+swapping only the retrieval algorithm (TF-IDF -> embeddings, same
+DeepSeek model) also improved the rate, independently. Both axes carry
+real, separable signal in this sample -- context-selection quality was
+never fully exonerated by the session-7 diagnosis, it just wasn't the
+*only* thing tested until now.
+
 ### Infrastructure notes, for whoever runs this next
 
 - **Running policies concurrently broke DNS resolution.** Three
