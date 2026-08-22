@@ -2413,5 +2413,144 @@
         "pylint-dev__pylint-7080"
       ]
     }
+  },
+  {
+    "tag": "combo_ours_8000_r0_gemini_embedding",
+    "policy": "ours",
+    "budget": 8000,
+    "seed": 0,
+    "model": "gemini",
+    "retriever": "embedding",
+    "records": [
+      {
+        "instance_id": "astropy__astropy-12907",
+        "policy": "ours",
+        "budget": 8000,
+        "seed": 0,
+        "context_tokens": 7998,
+        "applies": false,
+        "apply_err": "empty patch",
+        "n_errors": 0,
+        "patch": "",
+        "usage": {
+          "input_tokens": 12394,
+          "output_tokens": 795,
+          "elapsed_s": 143.6,
+          "attempts": 1,
+          "n_blocks": 0
+        },
+        "resolved": false
+      },
+      {
+        "instance_id": "django__django-16082",
+        "policy": "ours",
+        "budget": 8000,
+        "seed": 0,
+        "context_tokens": 8000,
+        "applies": true,
+        "apply_err": "",
+        "n_errors": 0,
+        "patch": "diff --git a/django/db/models/expressions.py b/django/db/models/expressions.py\n--- a/django/db/models/expressions.py\n+++ b/django/db/models/expressions.py\n@@ -647,22 +647,28 @@\n     def set_source_expressions(self, exprs):\n         self.lhs, self.rhs = exprs\n \n-    def _resolve_output_field(self):\n-        # We avoid using super() here for reasons given in\n-        # Expression._resolve_output_field()\n-        combined_type = _resolve_combined_type(\n-            self.connector,\n-            type(self.lhs._output_field_or_none),\n-            type(self.rhs._output_field_or_none),\n-        )\n-        if combined_type is None:\n+def _resolve_output_field(self):\n+    try:\n+        return super()._resolve_output_field()\n+    except FieldError:\n+        try:\n+            connector = (\n+                self.ADD\n+                if self.connector in (self.MOD, self.POW)\n+                else self.connector\n+            )\n+            return _connector_combinators[connector][\n+                (\n+                    type(self.lhs.output_field),\n+                    type(self.rhs.output_field),\n+                )\n+            ]\n+        except KeyError:\n             raise FieldError(\n-                f\"Cannot infer type of {self.connector!r} expression involving these \"\n-                f\"types: {self.lhs.output_field.__class__.__name__}, \"\n-                f\"{self.rhs.output_field.__class__.__name__}. You must set \"\n-                f\"output_field.\"\n+                f\"Cannot infer type of {self.connector!r} expression involving these types: \"\n+                f\"{self.lhs.output_field.__class__.__name__}, \"\n+                f\"{self.rhs.output_field.__class__.__name__}. You must set output_field.\"\n             )\n-        return combined_type()\n \n     def as_sql(self, compiler, connection):\n         expressions = []\n",
+        "usage": {
+          "input_tokens": 12241,
+          "output_tokens": 227,
+          "elapsed_s": 119.7,
+          "attempts": 1,
+          "n_blocks": 1
+        },
+        "resolved": false
+      },
+      {
+        "instance_id": "pallets__flask-5014",
+        "policy": "ours",
+        "budget": 8000,
+        "seed": 0,
+        "context_tokens": 7985,
+        "applies": false,
+        "apply_err": "empty patch",
+        "n_errors": 0,
+        "patch": "",
+        "usage": {
+          "input_tokens": 11865,
+          "output_tokens": 0,
+          "elapsed_s": 102.7,
+          "attempts": 2,
+          "n_blocks": 0
+        },
+        "resolved": false
+      },
+      {
+        "instance_id": "psf__requests-1921",
+        "policy": "ours",
+        "budget": 8000,
+        "seed": 0,
+        "context_tokens": 7999,
+        "applies": true,
+        "apply_err": "",
+        "n_errors": 0,
+        "patch": "diff --git a/requests/sessions.py b/requests/sessions.py\n--- a/requests/sessions.py\n+++ b/requests/sessions.py\n@@ -39,10 +39,16 @@\n     \"\"\"\n \n     if session_setting is None:\n-        return request_setting\n+        if isinstance(request_setting, Mapping):\n+            session_setting = {}\n+        else:\n+            return request_setting\n \n     if request_setting is None:\n-        return session_setting\n+        # Bypass if not a dictionary (e.g. verify)\n+        if not isinstance(session_setting, Mapping):\n+            return session_setting\n+        request_setting = {}\n \n     # Bypass if not a dictionary (e.g. verify)\n     if not (\n@@ -54,8 +60,8 @@\n     merged_setting = dict_class(to_key_val_list(session_setting))\n     merged_setting.update(to_key_val_list(request_setting))\n \n-    # Remove keys that are set to None.\n-    for (k, v) in request_setting.items():\n+    # Remove keys that are set to None. Extract keys to avoid dictionary size changed during iteration\n+    for (k, v) in list(merged_setting.items()):\n         if v is None:\n             del merged_setting[k]\n \n",
+        "usage": {
+          "input_tokens": 11837,
+          "output_tokens": 335,
+          "elapsed_s": 140.5,
+          "attempts": 1,
+          "n_blocks": 1
+        },
+        "resolved": true
+      },
+      {
+        "instance_id": "pylint-dev__pylint-7080",
+        "policy": "ours",
+        "budget": 8000,
+        "seed": 0,
+        "context_tokens": 7997,
+        "applies": false,
+        "apply_err": "empty patch",
+        "n_errors": 0,
+        "patch": "",
+        "usage": {
+          "input_tokens": 11484,
+          "output_tokens": 1,
+          "elapsed_s": 130.3,
+          "attempts": 1,
+          "n_blocks": 0
+        },
+        "resolved": false
+      },
+      {
+        "instance_id": "pytest-dev__pytest-6202",
+        "policy": "ours",
+        "budget": 8000,
+        "seed": 0,
+        "context_tokens": 7996,
+        "applies": true,
+        "apply_err": "",
+        "n_errors": 0,
+        "patch": "diff --git a/src/_pytest/python.py b/src/_pytest/python.py\n--- a/src/_pytest/python.py\n+++ b/src/_pytest/python.py\n@@ -269,7 +269,7 @@\n         return getattr(self.parent.obj, self.name)\n \n     def getmodpath(self, stopatmodule=True, includemodule=False):\n-        \"\"\" return python path relative to the containing module. \"\"\"\n+        \"\"\" return python path relative to the including module. \"\"\"\n         chain = self.listchain()\n         chain.reverse()\n         parts = []\n@@ -286,7 +286,7 @@\n             parts.append(name)\n         parts.reverse()\n         s = \".\".join(parts)\n-        return s.replace(\".[\", \"[\")\n+        return s\n \n     def reportinfo(self):\n         # XXX caching?\n",
+        "usage": {
+          "input_tokens": 13017,
+          "output_tokens": 186,
+          "elapsed_s": 27.9,
+          "attempts": 1,
+          "n_blocks": 1
+        },
+        "resolved": true
+      }
+    ],
+    "harness": {
+      "resolved_ids": [
+        "psf__requests-1921",
+        "pytest-dev__pytest-6202"
+      ],
+      "unresolved_ids": [
+        "django__django-16082"
+      ],
+      "empty_patch_ids": [
+        "astropy__astropy-12907",
+        "pallets__flask-5014",
+        "pylint-dev__pylint-7080"
+      ],
+      "error_ids": []
+    }
   }
 ]

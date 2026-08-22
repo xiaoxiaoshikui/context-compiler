@@ -888,6 +888,37 @@ real, separable signal in this sample -- context-selection quality was
 never fully exonerated by the session-7 diagnosis, it just wasn't the
 *only* thing tested until now.
 
+**Does the pylint "regression" above have a real explanation, or is it
+just embedding-retrieval being flaky?** It has a real explanation.
+`expand_modules.py`'s content is heavy with `ignore_list`/`ignore-list
+-re` vocabulary -- genuinely, semantically related to the bug report
+(`ignore-paths` being ignored under `--recursive=y`) -- but the word
+"recursive" itself never appears in the file at all, confirmed by direct
+inspection. Both retrieval algorithms are missing half of the concept
+the bug is actually about, in different ways: TF-IDF fails on exact-term
+overlap (no shared "recursive"), embeddings fail because the file's
+dominant semantic signal ("ignore-list path matching, config parsing")
+doesn't uniquely triangulate against a large, noisy repo full of other
+"ignore"/config-adjacent files once "recursive" isn't there to narrow it
+further. Not a mysterious embedding failure -- a genuinely hard case for
+lexical *and* semantic retrieval alike.
+
+**Combining the two positive findings: embedding retriever + Gemini,
+together.** 2/6 (`requests`, `pytest`) -- the *same two* instances
+Gemini alone resolved with plain TF-IDF, not more. With n=1 this doesn't
+show compounding, but it doesn't rule it out either; a real confound
+makes `flask`'s result in this specific run unusable regardless: its
+Gemini call stalled for 2,469.9 seconds (the hard 300s wall-clock
+timeout did not save it), almost certainly because a separate,
+concurrent script (the pylint investigation immediately above) was
+making its own network calls to a different provider at the same time
+-- exactly the DNS/resource-contention failure mode already documented
+below, which this session had otherwise been careful to avoid until
+this one lapse. `flask`'s "empty" result here should be treated as
+unknown, not as a real data point, and the lesson is reconfirmed rather
+than new: nothing that touches the network runs concurrently with a
+`real_eval.py` process, including "small, quick" auxiliary scripts.
+
 ### Infrastructure notes, for whoever runs this next
 
 - **Running policies concurrently broke DNS resolution.** Three

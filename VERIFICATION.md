@@ -544,3 +544,21 @@ the diagnosis instead of just stating it" section.
   hadn't been tested in isolation from rendering fidelity until now.
 - Regenerated `benchmarks/charts/real_eval_model_swap.svg` and
   `benchmarks/charts/real_eval_retriever_swap.svg`.
+- Explained the pylint embedding "regression" rather than leaving it as
+  an open question: `expand_modules.py` contains heavy `ignore_list`
+  vocabulary genuinely related to the bug (`ignore-paths` under
+  `--recursive=y`), but never contains the word "recursive" at all --
+  confirmed directly. A real, hard case for lexical *and* semantic
+  retrieval alike, not an embedding-specific flaw.
+- Ran the two positive findings combined (Gemini + `EmbeddingRetriever`,
+  1 repeat, tag `combo`): **2/6** (`requests`, `pytest`) -- the same two
+  instances Gemini-alone resolved with plain TF-IDF, not more. Not
+  strong evidence either way at n=1. This run also has a confirmed
+  confound: `flask`'s Gemini call stalled 2,469.9s (the 300s hard
+  timeout did not save it) because a separate investigation script was
+  making concurrent network calls to a different provider at the same
+  time -- the exact DNS/resource-contention failure mode already
+  documented in `benchmarks/README.md`'s infrastructure notes,
+  reconfirmed by a real lapse in following that rule rather than a new
+  mechanism. `flask`'s result in this run is unusable, not a real data
+  point.
