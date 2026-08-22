@@ -69,7 +69,46 @@ class CompilerConfig:
     # Forcing full text on a small number of top candidates trades some of
     # that breadth for the precision an actual edit needs. 0 disables this
     # and restores pre-2026-08-22 behavior.
-    top_k_full_text: int = 3
+    #
+    # Raised from 3 to 7 after checking, across 6 real SWE-bench instances,
+    # where each one's *actual* fix file (from the gold patch, not a guess)
+    # landed in the relevance ranking: 4 of 6 already ranked inside the top
+    # 3 (no change from raising this), but astropy-12907's fix file ranked
+    # 7th -- edged out by an unrelated top-3 slot -- and stayed invisible
+    # (L0) at k=3, reaching full text only at k>=7. Confirmed zero change
+    # in the synthetic benchmark's output (byte-identical report at k=3 vs
+    # k=7) and the full unit suite still passes, so the extra breadth this
+    # costs isn't visible at this benchmark's scale; it only showed up on
+    # a real, large repository. One real instance (pylint-7080) saw its
+    # already-unselected-in-any-useful-sense fix file (L0, i.e. a bare
+    # pointer) get pushed out of selection entirely at k=7 -- a real
+    # crowding cost, but not a change to whether it was actually usable.
+    top_k_full_text: int = 7
+    # Ceiling on how much any single top_k_full_text item may claim: the
+    # larger of this fraction of the whole budget, or top_k_max_item_floor
+    # tokens. Found via the same real instance: without a cap, a single
+    # large file ranked in the top-K can consume the entire budget on its
+    # own and crowd out everything else. A fraction alone breaks small
+    # budgets, though -- confirmed on the synthetic benchmark: several
+    # 150-250 token tasks regressed because 25% of a 150-token budget
+    # (~37 tokens) is smaller than files that would otherwise fit at L4
+    # outright, capping fidelity for no reason. The floor keeps the cap a
+    # no-op until it's actually needed; the real remaining-budget check
+    # right after this still degrades anything that doesn't truly fit.
+    top_k_max_item_fraction: float = 0.25
+    top_k_max_item_floor: int = 2000
+    # How many graph-adjacent test files to force to at least L3 per top-K
+    # item (see the graph_test_ids block in `compile`). 1 sounds like the
+    # obvious choice ("the" test for this file) but is fragile in practice:
+    # a widely-imported module has many importing tests, and the correct
+    # one frequently loses a near-tie to an unrelated one on lexical score
+    # alone -- confirmed on a real instance, 0.4396 vs 0.4433, an 0.8% gap
+    # separating the right test from the wrong one. 2 catches that specific
+    # failure mode cheaply; it does not help when the correct test is
+    # buried much further down a long list of neighbors (confirmed on
+    # another real instance with 17 candidates, correct one ranked 15th) --
+    # that is a distinct, harder problem this knob is not meant to solve.
+    graph_test_ids_per_item: int = 2
 
 
 _LEVEL_ORDER = [
@@ -111,7 +150,43 @@ class ContextCompiler:
     def _candidates(self, task: str, limit: int) -> list[ContextItem]:
         pool = self.store.list(limit=self.config.max_pool_size)
         ranked = self.retriever.rank(task, pool, limit=limit)
+        ranked = self._augment_with_graph_adjacent_tests(ranked, pool)
         return augment_with_critical_items(ranked, pool)
+
+    def _augment_with_graph_adjacent_tests(
+        self, ranked: list[ContextItem], pool: list[ContextItem], *, top_n: int = 12
+    ) -> list[ContextItem]:
+        """Union in the test file one graph-hop from each top-ranked candidate,
+        even when the lexical retriever ranked it too low (or not at all) to
+        make the candidate cut on its own.
+
+        A bug report's vocabulary rarely overlaps with its own regression
+        test's vocabulary, so TF-IDF/FTS retrieval alone frequently drops the
+        one test that would actually validate a fix from the candidate pool
+        entirely -- confirmed on real SWE-bench instances (django, astropy):
+        the test file scored far outside the retriever's top ~200 even
+        though a real import edge connects it to the fix file one hop away.
+        `compile`'s later graph_test_ids step can only force a candidate's
+        *render fidelity* up; it can't rescue an item that was never a
+        candidate in the first place, so that rescue has to happen here,
+        before the retriever's cutoff is applied.
+        """
+        if not self.use_graph:
+            return ranked
+        ranked_ids = {i.id for i in ranked}
+        graph = build_dependency_graph(self.store, limit=self.config.max_pool_size)
+        pool_by_id = {i.id: i for i in pool}
+        extra: list[ContextItem] = []
+        seen: set[str] = set()
+        for item in ranked[:top_n]:
+            for neighbor_id in graph.related(item.id, depth=1):
+                if neighbor_id in ranked_ids or neighbor_id in seen:
+                    continue
+                neighbor = pool_by_id.get(neighbor_id)
+                if neighbor is not None and neighbor.kind is ContextKind.TEST:
+                    extra.append(neighbor)
+                    seen.add(neighbor_id)
+        return ranked + extra
 
     def _graph_related_ids(
         self, first_pass: list[tuple[ContextItem, ScoreBreakdown]], *, top_n: int = 12
@@ -123,16 +198,37 @@ class ContextCompiler:
         score is set to its ceiling in the second scoring pass (see
         `scoring.dependency_score`), rather than blended with it.
         """
+        related, _ = self._graph_related_ids_by_item(first_pass, top_n=top_n)
+        return related
+
+    def _graph_related_ids_by_item(
+        self, first_pass: list[tuple[ContextItem, ScoreBreakdown]], *, top_n: int = 12
+    ) -> tuple[set[str], dict[str, set[str]]]:
+        """Like `_graph_related_ids`, but also keyed per top-scoring item.
+
+        The union alone is enough for the scoring boost (any graph adjacency
+        to *something* highly-ranked is a real signal), but it's not enough
+        to answer "what does *this specific* top-K candidate's test file
+        neighbor to at least L3" -- picking the highest-scoring item out of
+        the union can and does pick a test file adjacent to a *different*
+        top-scoring item instead of the one actually being asked about.
+        Confirmed on a real SWE-bench instance: the union's top-scoring test
+        file scored higher than, and was picked over, the one actually
+        importing the file that needed editing.
+        """
         if not self.use_graph:
-            return set()
+            return set(), {}
         graph = build_dependency_graph(self.store, limit=self.config.max_pool_size)
         top_ids = [
             item.id for item, _ in sorted(first_pass, key=lambda x: x[1].total, reverse=True)[:top_n]
         ]
+        per_item: dict[str, set[str]] = {}
         related: set[str] = set()
         for item_id in top_ids:
-            related |= graph.related(item_id, depth=1)
-        return related
+            neighbors = graph.related(item_id, depth=1)
+            per_item[item_id] = neighbors
+            related |= neighbors
+        return related, per_item
 
     def compile(
         self,
@@ -161,7 +257,7 @@ class ContextCompiler:
         candidates = self._candidates(task, candidate_limit)
         first_pass = [(i, score_item(task, i, weights=self.weights)) for i in candidates]
         active = activated_dependency_terms(first_pass)
-        graph_related_ids = self._graph_related_ids(first_pass)
+        graph_related_ids, graph_related_by_item = self._graph_related_ids_by_item(first_pass)
         scored = [
             (
                 i,
@@ -199,22 +295,75 @@ class ContextCompiler:
             item.id
             for item, _ in sorted(scored, key=lambda x: -x[1].total)[: self.config.top_k_full_text]
         }
+        # The test that actually validates a fix is frequently *not* lexically
+        # close to the task text (a bug report rarely reuses its test's
+        # vocabulary), so plain relevance ranking alone often leaves it far
+        # outside top_k_full_text even when it's the single most useful thing
+        # to show in full -- confirmed on real SWE-bench instances: 3 of 4
+        # checked cases had their real fix-validating test ranked well outside
+        # the top few candidates by score alone. But a real code-imports-test
+        # edge from the dependency graph reliably exists in most of those
+        # cases even when the score doesn't reflect it (graph_related_ids
+        # already carries this signal into scoring -- see
+        # `_graph_related_ids` -- just not always far enough to win a
+        # ranking-only cutoff). Force the top `graph_test_ids_per_item`
+        # highest-scoring graph-related test items *specific to each* top-K
+        # candidate (not the highest-scoring among all top-K candidates'
+        # neighbors combined -- see `_graph_related_ids_by_item`) to at
+        # least L3 (a real excerpt, not just a pointer) so each gets a
+        # chance to actually
+        # inform the fix, regardless of how it scored on relevance alone.
+        graph_test_ids: set[str] = set()
+        for tid in top_k_ids:
+            tid_neighbor_ids = graph_related_by_item.get(tid, set())
+            test_neighbors = sorted(
+                (
+                    (item, b) for item, b in scored
+                    if item.id in tid_neighbor_ids
+                    and item.kind is ContextKind.TEST
+                    and item.id not in top_k_ids
+                ),
+                key=lambda pair: -pair[1].total,
+            )
+            for item, _ in test_neighbors[: self.config.graph_test_ids_per_item]:
+                graph_test_ids.add(item.id)
         forced = sorted(
             [
                 pair
                 for pair in scored
-                if pair[0].pinned or pair[0].kind is ContextKind.CONSTRAINT or pair[0].id in top_k_ids
+                if pair[0].pinned
+                or pair[0].kind is ContextKind.CONSTRAINT
+                or pair[0].id in top_k_ids
+                or pair[0].id in graph_test_ids
             ],
-            key=lambda x: (not x[0].pinned, x[0].id not in top_k_ids, -x[1].total),
+            key=lambda x: (not x[0].pinned, x[0].id not in top_k_ids, x[0].id not in graph_test_ids, -x[1].total),
+        )
+        # Cap how much of the *whole* budget any single top-K item's forced
+        # full text may claim. Without this, one large file among the top-K
+        # (e.g. a 16k-token module against an 8k budget) silently consumes
+        # the entire budget by itself, crowding out every other candidate --
+        # including, concretely, the file a real SWE-bench instance actually
+        # needed edited, which was ranked just below the top 3. Confirmed via
+        # audit log: "forced ... L4 ... cost=7160" against an 8000 budget
+        # left only two other items degraded to L3 and L0.
+        top_k_item_cap = max(
+            self.config.top_k_max_item_floor, int(budget * self.config.top_k_max_item_fraction)
         )
         for item, b in forced:
             if item.pinned:
-                min_level = self.config.pinned_min_level
+                idx = self._best_idx_at_or_below(variants[item.id], self.config.pinned_min_level)
             elif item.kind is ContextKind.CONSTRAINT:
-                min_level = self.config.constraint_min_level
+                idx = self._best_idx_at_or_below(variants[item.id], self.config.constraint_min_level)
+            elif item.id in graph_test_ids:
+                # L3 (a real excerpt), not L4 -- a test file can be huge
+                # (hundreds of cases in one file is common), and the point
+                # is giving the model a concrete look at real assertions,
+                # not necessarily the entire file.
+                cap_idx = self._largest_fitting_idx(variants[item.id], top_k_item_cap)
+                l3_idx = self._best_idx_at_or_below(variants[item.id], RenderLevel.L3)
+                idx = min(cap_idx, l3_idx) if cap_idx >= 0 and l3_idx >= 0 else max(cap_idx, l3_idx)
             else:
-                min_level = RenderLevel.L4
-            idx = self._best_idx_at_or_below(variants[item.id], min_level)
+                idx = self._largest_fitting_idx(variants[item.id], top_k_item_cap)
             if idx < 0:
                 continue
             cost = variants[item.id][idx].token_count

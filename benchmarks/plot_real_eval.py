@@ -54,29 +54,39 @@ def main() -> None:
     budget = 8000
     oracle_n = resolved_count(f"full2_oracle_{budget}_r0")
     random_runs = [resolved_count(f"full4_random_{budget}_r{i}") for i in (0, 1)]
-    ours_before = [resolved_count(f"full4_ours_{budget}_r{i}") for i in (0, 1)]
-    ours_after = [resolved_count(f"topk1_ours_{budget}_r{i}") for i in (0, 1)]
+    # Every "ours" run collected across every fix stage, oldest to newest,
+    # shown in full rather than cherry-picking a flattering before/after
+    # pair -- three real, verified bugs were fixed between full4 and
+    # topk3 (see benchmarks/README.md "2026-08-22 continued"), and the
+    # resolved count did not move in a clean line: 0,1 -> 0,2 -> 1,0 ->
+    # 0,0. That noise is itself the honest finding at this sample size,
+    # not something to average away by only showing two points.
+    ours_stages = [
+        ("full4", "before any fix"),
+        ("topk1", "+ top_k_full_text"),
+        ("topk2", "+ item cap"),
+        ("topk3", "+ graph rescue, k=7"),
+    ]
+    ours_runs = {
+        stage: [resolved_count(f"{stage}_ours_{budget}_r{i}") for i in (0, 1)]
+        for stage, _ in ours_stages
+    }
+    categories = ["Oracle (ceiling)", "Random (floor) r0", "Random (floor) r1"]
+    values = [oracle_n, random_runs[0], random_runs[1]]
+    for stage, label in ours_stages:
+        categories += [f"Ours ({label}) r0", f"Ours ({label}) r1"]
+        values += ours_runs[stage]
     svg = bar_chart_svg(
         title=f"Oracle ceiling vs Random floor vs Ours, at a fixed {budget:,}-token budget",
         subtitle=(
             f"Same 6 tasks, same budget, same model -- only how the context was chosen differs. "
-            f"'Ours (before)' spread the budget over many low-fidelity items; 'Ours (after)' forces "
-            f"the top-3 candidates to full text first (top_k_full_text). Repeats shown as separate "
-            f"bars -- a real model is stochastic, n=2 is not enough to separate luck from signal. "
-            f"Higher = better."
+            f"Every 'Ours' stage is a real, verified bug fix (see benchmarks/README.md), shown in "
+            f"full rather than a single before/after pair. Repeats shown as separate bars -- a real "
+            f"model is stochastic, n=2 per stage is not enough to separate luck from signal, and "
+            f"the run-to-run noise visible here is itself part of the honest result. Higher = better."
         ),
-        categories=[
-            "Oracle (ceiling)",
-            "Random (floor) r0", "Random (floor) r1",
-            "Ours (before) r0", "Ours (before) r1",
-            "Ours (after) r0", "Ours (after) r1",
-        ],
-        series=[("resolved", "#2563eb", [
-            oracle_n,
-            random_runs[0], random_runs[1],
-            ours_before[0], ours_before[1],
-            ours_after[0], ours_after[1],
-        ])],
+        categories=categories,
+        series=[("resolved", "#2563eb", values)],
         y_label=f"instances resolved (of {n_tasks})",
     )
     (CHARTS_DIR / "real_eval_method_comparison.svg").write_text(svg)

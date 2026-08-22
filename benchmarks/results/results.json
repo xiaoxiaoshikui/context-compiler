@@ -285,7 +285,7 @@
             "successes": 1,
             "success_rate": 1.0,
             "mean_score": 1.0,
-            "mean_used_tokens": 678.0,
+            "mean_used_tokens": 692.0,
             "mean_items": 6.0
           },
           {
@@ -514,8 +514,8 @@
             "successes": 1,
             "success_rate": 1.0,
             "mean_score": 1.0,
-            "mean_used_tokens": 398.0,
-            "mean_items": 5.0
+            "mean_used_tokens": 397.0,
+            "mean_items": 6.0
           },
           {
             "budget": 700,
@@ -990,7 +990,7 @@
             "successes": 1,
             "success_rate": 1.0,
             "mean_score": 1.0,
-            "mean_used_tokens": 375.0,
+            "mean_used_tokens": 400.0,
             "mean_items": 6.0
           },
           {

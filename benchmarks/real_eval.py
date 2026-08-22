@@ -175,20 +175,54 @@ def ingest_repo(instance_id: str, repo_path: Path) -> ContextStore:
 # diff content -- see module docstring.
 # --------------------------------------------------------------------------
 
-def oracle_file_set(row: dict) -> set[str]:
+_UNITTEST_NODE_ID_RE = re.compile(r"\(([\w.]+)\)\s*$")
+
+
+def _resolve_unittest_module(dotted_with_class: str, known_sources: set[str]) -> str | None:
+    """Django (and other repos using stdlib unittest instead of pytest)
+    reports FAIL_TO_PASS/PASS_TO_PASS as "test_x (pkg.mod.ClassName)", not
+    pytest's "path/to/test_x.py::test_x". No "::" means the old
+    `node_id.split("::")[0]` silently returned the whole descriptive
+    string as a "file path" -- never matched anything real, so the test
+    file was just missing from the oracle context with no error. Dropping
+    the trailing ClassName gives a dotted *module* path, but that's not
+    always the same as the file's path from repo root (Django's test
+    modules resolve relative to a `tests/` runner root, e.g. dotted
+    `expressions.tests` is really `tests/expressions/tests.py`) -- so
+    match by suffix against the real ingested paths instead of assuming
+    dots-to-slashes is already repo-root-relative.
+    """
+    parts = dotted_with_class.split(".")[:-1]  # drop the trailing ClassName
+    if not parts:
+        return None
+    candidate = "/".join(parts) + ".py"
+    if candidate in known_sources:
+        return candidate
+    matches = [s for s in known_sources if s == candidate or s.endswith("/" + candidate)]
+    return matches[0] if len(matches) == 1 else None
+
+
+def oracle_file_set(row: dict, known_sources: set[str] = frozenset()) -> set[str]:
     files = set()
     for a, b in DIFF_HEADER_RE.findall(row["patch"]):
         files.add(a)
         files.add(b)
     for key in ("FAIL_TO_PASS", "PASS_TO_PASS"):
         for node_id in json.loads(row[key]):
-            files.add(node_id.split("::")[0])
+            if "::" in node_id:
+                files.add(node_id.split("::")[0])
+                continue
+            m = _UNITTEST_NODE_ID_RE.search(node_id)
+            resolved = _resolve_unittest_module(m.group(1), known_sources) if m else None
+            if resolved:
+                files.add(resolved)
+            # else: neither format matched -- dropped, not guessed at.
     return files
 
 
 def build_oracle_universe(row: dict, store: ContextStore) -> str:
-    files = sorted(oracle_file_set(row))
     by_source = {i.source: i for i in store.list(limit=10000)}
+    files = sorted(oracle_file_set(row, known_sources=set(by_source)))
     parts = [f"ISSUE:\n{row['problem_statement'].strip()}"]
     for f in files:
         item = by_source.get(f)

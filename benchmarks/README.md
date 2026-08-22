@@ -610,6 +610,173 @@ That isn't a fairer test of `compile()` -- it's a test with its core
 mechanism (spend a little on many relevant files instead of everything
 on one) switched off.
 
+### 2026-08-22 continued: a budget-crowding regression, a Django oracle bug, and a graph-based test-visibility fix
+
+The `top_k_full_text` fix above (0/6 -> 1/6 -> 2/6) was re-verified more
+rigorously and two more real, distinct bugs came out of that -- one a
+regression the fix itself introduced, one unrelated and pre-existing.
+
+**A single huge top-ranked file could still eat the whole budget.**
+Spot-checking `flask-5014` again after the fix, `compile()` was found to
+have stopped selecting `blueprints.py` *at all* -- a contradiction with
+the earlier successful run. Audit log inspection showed why:
+`src/flask/scaffold.py` (also top-3 by score) is 7,160 tokens; forcing it
+to full text against an 8,000-token budget consumed nearly everything,
+degrading `app.py`/`helpers.py` to L3/L0 and leaving nothing for anything
+else, `blueprints.py` included. Fixed with two new `CompilerConfig`
+knobs, `top_k_max_item_fraction` (0.25) and `top_k_max_item_floor`
+(2000): any single forced top-K item is capped at
+`max(floor, fraction * budget)`. A fraction-only cap was tried first and
+broke small budgets on the synthetic benchmark (25% of a 150-token
+budget is ~37 tokens, smaller than files that would otherwise fit
+outright at L4) -- the floor keeps the cap a no-op until it's actually
+needed. Re-verified zero regressions on the synthetic benchmark and
+`blueprints.py` back in selection at L2 on the real instance.
+
+**Django's test IDs were silently producing garbage oracle file paths.**
+`oracle_file_set()` assumed every `FAIL_TO_PASS`/`PASS_TO_PASS` entry was
+a pytest-style node id (`path/to/test.py::test_name`) and took the text
+before `::` as the file path. Django uses stdlib `unittest`, whose IDs
+look like `test_name (module.path.ClassName)` -- no `::` at all, so the
+whole descriptive string was silently kept as a "file path" that matched
+nothing. Fixed with `_resolve_unittest_module()`: strip the trailing
+class name, join the remaining dotted path, and match it against the
+real ingested source paths by suffix (Django's dotted test-module paths
+resolve relative to a `tests/` runner root, not the repo root, so a
+naive dots-to-slashes join isn't enough on its own). This is an oracle
+-universe construction bug, not a `context_compiler` bug -- it only
+affects how good the *ceiling* measurement is for `unittest`-style repos
+(currently just `django` in this 6-instance set), not `ours`.
+
+**Graph-based test-file visibility: three more bugs on the way to making
+it actually work.** The next hypothesis: since Oracle gets every fix
+-validating test file for free and `ours` structurally doesn't, maybe the
+real import-edge graph already built for scoring (`src/context_compiler/
+graph.py`) could rescue at least the single most relevant test file per
+top-K candidate. It doesn't, not without three separate fixes, each
+found by tracing a real instance until the mechanism actually worked
+end-to-end rather than trusting that it did:
+
+1. *Wrong neighbor set.* The forcing loop iterated over each top-K item
+   but checked test-file membership against the union of *all* top-K
+   items' graph neighbors combined, not that specific item's own
+   neighbors -- so whichever graph-related test scored highest overall
+   won every top-K item's slot, not necessarily the one actually
+   adjacent to it. Confirmed on `django-16082`: the correct test
+   (`tests/expressions/tests.py`, adjacent to the fix file) scored
+   0.4396; an unrelated-but-graph-related test (`tests/aggregation/
+   tests.py`) scored 0.4433 and won every time. Fixed by computing and
+   keeping each top-scoring item's own neighbor set
+   (`_graph_related_ids_by_item`) instead of only the flattened union.
+2. *Candidacy, not just fidelity.* Even with (1) fixed, both diagnosed
+   instances still showed the correct test at L0. The forcing mechanism
+   can only promote a candidate's *render level* -- it can't rescue an
+   item that was never a candidate in the first place, and the test file
+   in both cases had already been dropped before that point: the lexical
+   retriever's own top-~200 cutoff ran *before* any graph reasoning ever
+   sees the pool. A bug report's vocabulary rarely overlaps with its own
+   regression test's vocabulary, so this is common, not an edge case.
+   Fixed with `_augment_with_graph_adjacent_tests()`: union in the test
+   file one graph-hop from each of the retriever's own top-ranked
+   candidates *before* the retriever's limit is applied, mirroring the
+   existing `augment_with_critical_items()` policy already used for
+   pinned/constraint items.
+3. *Ties among many legitimate neighbors.* With (1) and (2) both fixed,
+   `django-16082` resolved correctly (L0 -> L3) but `astropy-12907` still
+   didn't. Its top-K fix file (`astropy/modeling/core.py`) is a
+   foundational base-class module -- 17 different test files import it,
+   and the actually-correct one for this bug ranked 15th of 17 on
+   lexical score, nowhere near "highest-scoring neighbor." Widening from
+   1 to 2 forced test files per top-K item (`graph_test_ids_per_item`)
+   only helps near-ties, not this. This is recorded as an open,
+   harder problem -- 1-hop import adjacency is too coarse a signal once
+   a module is widely shared -- not something this pass claims to fix.
+
+Separately, re-checking where each of the 6 real instances' *actual* fix
+file (from the gold patch) landed in the relevance ranking found a
+different, unrelated problem specific to `astropy-12907`: the fix file
+itself, `separable.py`, ranked 7th -- just outside `top_k_full_text`'s
+default of 3, edged out by an unrelated `astropy/io/fits/column.py`. 4 of
+the 6 instances' fix files already ranked in the top 3 (no effect either
+way); only `astropy` needed more room. Raised `top_k_full_text` to 7 --
+confirmed byte-identical synthetic-benchmark output at k=3 vs. k=7 (this
+benchmark's tasks are too small for the extra breadth to matter), and
+`separable.py` now reaches L3 on the real instance. One real cost: on
+`pylint-7080`, whose fix file was already unselected-in-any-useful-sense
+at k=3 (L0, a bare pointer), the wider forcing pushed it out of selection
+entirely at k=7 -- a real crowding cost worth naming, though not a
+change to whether the context was actually usable either way.
+
+**Honest aggregate across every real `ours_8000` run collected so far**
+(pre- and post- all of the above, one row per fix-tag, one column per
+instance, both repeats shown per cell; `R` = resolved, `0` = patch
+applied but hidden tests still failed, `empty` = DeepSeek exhausted its
+reasoning budget on all 4 retries and produced no patch at all -- an
+infrastructure/model failure for that run, not a verdict on context
+quality -- `error` = the `swebench` harness itself failed to evaluate
+the instance):
+
+| Tag | flask | requests | pytest | pylint | astropy | django |
+|---|---|---|---|---|---|---|
+| pre-fix (`full4`) | 0, R | empty, 0 | 0, empty | error, error | 0, 0 | 0, 0 |
+| `top_k_full_text` only (`topk1`) | 0, R | 0, R | 0, 0 | empty, error | 0, 0 | 0, 0 |
+| + item cap (`topk2`) | R, 0 | empty, 0 | empty, empty | error, error | empty, 0 | 0, 0 |
+| + graph rescue, k=7 (`topk3`) | 0, 0 | 0, 0 | 0, 0 | error, error | empty, 0 | empty, 0 |
+
+`pylint` errors out of the harness itself in 7 of these 8 runs --
+consistent enough to suspect a real, unresolved harness-environment
+issue specific to that repo rather than one-off noise (not yet
+root-caused), separate from the fact that its fix file is also too
+deep in the ranking (rank 19) for any mechanism here to reach anyway.
+
+Read the rest of this for what it actually shows, including the part
+that isn't flattering: across all 32 real (non-`error`) run-instances,
+exactly 4 resolved -- `flask` 3 times, `requests` once, `pytest` and
+`astropy` and `django` zero times each, in *any* fix stage. `topk3` --
+the version with every fix applied, including the two that directly and
+verifiably raised `django` and `astropy`'s render fidelity from L0 to L3
+for their real fix-validating test / fix file respectively (confirmed
+by direct inspection of the compiled context, not inferred from the
+resolved count) -- resolved 0 of 6 in both repeats. Render fidelity
+demonstrably improved and the resolved count did not follow.
+
+Two things are true at once here. First, this sample is far too small
+and far too noisy to read a monotonic trend into any single row --
+`flask`'s own resolved count bounces `0,R -> 0,R -> R,0 -> 0,0` across
+these same four tags, including between `topk2` and `topk3` where
+nothing about `flask`'s own context construction changed (confirmed
+directly: `blueprints.py` renders identically at `top_k_full_text=3`
+and `=7`) -- that's `deepseek-v4-pro`'s own stochasticity
+(`temperature=0.2`) dominating at n=2 repeats, not a context regression.
+Second, and more important: getting the right file *visible at high
+fidelity* is necessary but evidently not sufficient for
+`deepseek-v4-pro` to synthesize a *correct* whole-function rewrite from
+it. `requests`' fix file was already at full text before any of these
+fixes (see the ranking table above, rank 1) and it resolved in exactly
+1 of 8 runs; `pytest`'s fix file (rank 2) never resolved in 8 runs
+despite the same high visibility throughout. That points the next
+diagnostic step away from context selection/rendering (this repo's
+actual subject) and toward the patch-synthesis step itself
+(`benchmarks/real_eval.py`'s whole-function-rewrite mechanism, or
+`deepseek-v4-pro`'s raw capability on these specific fixes) as the more
+likely binding constraint from here -- reported as the diagnosis's real
+conclusion, not reframed as a `context_compiler` problem still waiting
+to be fixed.
+
+**A pretraining-memorization confound, found while investigating a
+different anomaly.** Testing `flask-5014` with effectively zero repo
+context (49 tokens, just the issue text) still produced an edit attempt
+against `src/flask/sansio/blueprints.py` -- a path that only exists in
+*newer* Flask versions, not the actual historical commit under test
+(which still used `src/flask/blueprints.py`). `deepseek-v4-pro` clearly
+has generic pretraining knowledge of how Flask's source layout evolved,
+but not exact recall of this specific historical commit's state --
+confirming real, provided context still has genuine grounding value here
+(it refines, rather than invalidates, what this evaluation is measuring)
+while flagging that popular open-source repos carry some irreducible
+memorization risk in any SWE-bench-style evaluation, consistent with
+known contamination concerns in that literature.
+
 ### Infrastructure notes, for whoever runs this next
 
 - **Running policies concurrently broke DNS resolution.** Three

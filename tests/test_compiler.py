@@ -259,6 +259,159 @@ class CompilerTests(unittest.TestCase):
                 "top_k_full_text=0 should restore the pre-fix behavior on this same setup",
             )
 
+    def test_top_k_full_text_does_not_let_one_huge_file_starve_everything_else(self):
+        # Regression test for a real second-order bug the previous fix
+        # introduced: forcing top-K candidates to full text unconditionally
+        # means a single *huge* top-ranked file can claim the entire budget
+        # by itself. Found on the same real flask-5014 instance: a 16.6k
+        # -token top-3 file consumed essentially all of an 8000-token
+        # budget (audit log: "forced ... L4 ... cost=7160"), leaving only
+        # two other items degraded to L3/L0 and dropping every other
+        # candidate -- including, concretely, the file the fix actually
+        # belonged in, ranked just outside the top 3. A per-item cap
+        # (top_k_max_item_fraction, floored by top_k_max_item_floor so it
+        # doesn't also break small budgets -- see the next test) fixes
+        # this by capping any single forced item's size, leaving room for
+        # the rest of the candidate pool.
+        with tempfile.TemporaryDirectory() as tmp:
+            store = ContextStore(Path(tmp) / "ctx.db")
+            # A huge, highly relevant file that would naturally rank #1.
+            store.add(
+                title="huge.py", source="huge.py", kind="code",
+                content="fix the widget bug here\n" + ("padding line\n" * 4000),
+                importance=0.9,
+            )
+            # Plenty of other candidates that should still get *some* room.
+            for i in range(40):
+                store.add(
+                    title=f"other-{i}.py", source=f"other-{i}.py", kind="code",
+                    content="fix the widget bug here " * 5, importance=0.5,
+                )
+            compiler = ContextCompiler(store)
+            result = compiler.compile("fix the widget bug", budget=8000)
+            self.assertGreater(
+                len(result.selections), 5,
+                "one huge top-ranked file should not be able to crowd out nearly everything else",
+            )
+
+    def test_top_k_item_cap_does_not_shrink_small_budgets(self):
+        # Regression test for the fix above overcorrecting: a *fraction*
+        # -only cap (e.g. 25% of budget) shrinks to almost nothing at small
+        # budgets and can force a file down from full text even when it
+        # would otherwise fit outright. Confirmed on the synthetic 15-task
+        # benchmark: several 150-250 token tasks regressed when the cap had
+        # no floor. top_k_max_item_floor keeps the cap a no-op until a file
+        # is actually large enough for it to matter.
+        with tempfile.TemporaryDirectory() as tmp:
+            store = ContextStore(Path(tmp) / "ctx.db")
+            target = store.add(
+                title="small.py", source="small.py", kind="code",
+                content="def fix_widget_bug():\n    return 42\n",
+                importance=0.9,
+            )
+            compiler = ContextCompiler(store)
+            result = compiler.compile("fix the widget bug", budget=150)
+            target_selection = next(s for s in result.selections if s.item_id == target.id)
+            self.assertEqual(
+                target_selection.level,
+                RenderLevel.L4,
+                "a small file that easily fits should still reach full text at a small budget",
+            )
+
+    def test_graph_adjacent_test_file_is_rescued_into_candidate_pool(self):
+        # Regression test: a bug report's vocabulary rarely overlaps with
+        # its own regression test's vocabulary, so the lexical retriever
+        # can drop a graph-adjacent test file from the candidate pool
+        # entirely before scoring or forcing ever gets a chance to run --
+        # confirmed on real SWE-bench instances (django, astropy), where
+        # the actual fix-validating test ranked outside the retriever's
+        # own top ~200. `compile`'s graph_test_ids forcing can only
+        # promote a candidate's *render level*; it can't rescue an item
+        # that was never a candidate. `_augment_with_graph_adjacent_tests`
+        # fixes this by unioning in graph-adjacent test files before the
+        # retriever's cutoff is applied.
+        with tempfile.TemporaryDirectory() as tmp:
+            store = ContextStore(Path(tmp) / "ctx.db")
+            widget = store.add(
+                title="widget.py", source="widget.py", kind="code",
+                content="fix the widget bug here " * 5, importance=0.9,
+            )
+            test_widget = store.add(
+                title="test_widget.py", source="test_widget.py", kind="test",
+                content="totally unrelated vocabulary about zebras and kites " * 5,
+                dependencies=[".widget"], importance=0.5,
+            )
+            # Distractors that beat test_widget.py on pure lexical overlap
+            # with the task, padding the pool past a tiny max_candidates so
+            # the retriever alone would drop test_widget.py from the cut.
+            for i in range(10):
+                store.add(
+                    title=f"distractor-{i}.py", source=f"distractor-{i}.py", kind="code",
+                    content="widget bug widget bug widget " * 3, importance=0.4,
+                )
+            config = CompilerConfig(max_candidates=3)
+            compiler = ContextCompiler(store, config=config)
+            candidates = compiler._candidates("fix the widget bug", config.max_candidates)
+            candidate_ids = {c.id for c in candidates}
+            self.assertIn(widget.id, candidate_ids)
+            self.assertIn(
+                test_widget.id,
+                candidate_ids,
+                "a test file one graph-hop from a top-ranked fix file should be pulled "
+                "into the candidate pool even when the retriever's own ranking drops it",
+            )
+
+    def test_graph_test_forcing_uses_each_top_items_own_neighbors_not_the_union(self):
+        # Regression test for the bug the fix above's own first attempt
+        # introduced: forcing looped over each top-K item but checked
+        # membership against the *union* of all top-K items' graph
+        # neighbors combined, not that specific item's own neighbors. With
+        # two top items that each have their own dedicated (and disjoint)
+        # test file, that meant the higher-scoring test file got forced
+        # for *both* items -- and the other item's real test never got
+        # forced at all. Confirmed on a real instance (django-16082):
+        # the correct test scored 0.4396 vs. a same-union-but-unrelated
+        # test's 0.4433, and the union approach always picked the latter.
+        with tempfile.TemporaryDirectory() as tmp:
+            store = ContextStore(Path(tmp) / "ctx.db")
+            fix_a = store.add(
+                title="alpha.py", source="alpha.py", kind="code",
+                content="fix the widget bug in alpha here " * 5, importance=0.9,
+            )
+            fix_b = store.add(
+                title="beta.py", source="beta.py", kind="code",
+                content="fix the widget bug in beta here " * 5, importance=0.85,
+            )
+            # test_alpha's content overlaps *less* with the task than
+            # test_beta's does, so a union-and-pick-highest-scoring
+            # approach would wrongly pick test_beta for alpha.py's slot
+            # too, leaving test_alpha unforced despite being the one
+            # actually graph-adjacent to alpha.py.
+            test_a = store.add(
+                title="test_alpha.py", source="test_alpha.py", kind="test",
+                content="alpha regression check", dependencies=[".alpha"], importance=0.3,
+            )
+            test_b = store.add(
+                title="test_beta.py", source="test_beta.py", kind="test",
+                content="fix the widget bug in beta here regression check " * 3,
+                dependencies=[".beta"], importance=0.3,
+            )
+            config = CompilerConfig(top_k_full_text=2)
+            compiler = ContextCompiler(store, config=config)
+            result = compiler.compile("fix the widget bug", budget=8000)
+            levels = {s.item_id: s.level for s in result.selections}
+            self.assertGreaterEqual(
+                levels.get(test_a.id, RenderLevel.L0),
+                RenderLevel.L3,
+                "test_alpha.py is the test actually adjacent to top-item alpha.py and "
+                "should be forced to at least L3 regardless of test_beta.py's score",
+            )
+            self.assertGreaterEqual(
+                levels.get(test_b.id, RenderLevel.L0),
+                RenderLevel.L3,
+                "test_beta.py should still be forced too, via beta.py's own slot",
+            )
+
     def test_reversible_expand(self):
         with tempfile.TemporaryDirectory() as tmp:
             store = ContextStore(Path(tmp) / "ctx.db")

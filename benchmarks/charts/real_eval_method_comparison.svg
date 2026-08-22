@@ -1,51 +1,68 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="860" height="452" viewBox="0 0 860 452" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
-<rect width="860" height="452" fill="#ffffff"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="622" viewBox="0 0 860 622" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+<rect width="860" height="622" fill="#ffffff"/>
 <text x="200" y="27" font-size="16.5" font-weight="600" fill="#111827">Oracle ceiling vs Random floor vs Ours, at a fixed 8,000-token budget</text>
-<text x="200" y="46" font-size="12" fill="#4b5563">Same 6 tasks, same budget, same model -- only how the context was chosen differs. 'Ours (before)'</text>
-<text x="200" y="62" font-size="12" fill="#4b5563">spread the budget over many low-fidelity items; 'Ours (after)' forces the top-3 candidates to full text</text>
-<text x="200" y="78" font-size="12" fill="#4b5563">first (top_k_full_text). Repeats shown as separate bars -- a real model is stochastic, n=2 is not</text>
-<text x="200" y="94" font-size="12" fill="#4b5563">enough to separate luck from signal. Higher = better.</text>
-<rect x="200" y="122" width="12" height="12" rx="2" fill="#2563eb"/>
-<text x="217" y="132" font-size="12" fill="#374151">resolved</text>
-<line x1="200.0" y1="134" x2="200.0" y2="406" stroke="#eef0f2" stroke-width="1"/>
-<text x="200.0" y="424" font-size="11" fill="#6b7280" text-anchor="middle">0</text>
-<line x1="314.0" y1="134" x2="314.0" y2="406" stroke="#eef0f2" stroke-width="1"/>
-<text x="314.0" y="424" font-size="11" fill="#6b7280" text-anchor="middle">1</text>
-<line x1="428.0" y1="134" x2="428.0" y2="406" stroke="#eef0f2" stroke-width="1"/>
-<text x="428.0" y="424" font-size="11" fill="#6b7280" text-anchor="middle">2</text>
-<line x1="542.0" y1="134" x2="542.0" y2="406" stroke="#eef0f2" stroke-width="1"/>
-<text x="542.0" y="424" font-size="11" fill="#6b7280" text-anchor="middle">3</text>
-<line x1="656.0" y1="134" x2="656.0" y2="406" stroke="#eef0f2" stroke-width="1"/>
-<text x="656.0" y="424" font-size="11" fill="#6b7280" text-anchor="middle">5</text>
-<line x1="770.0" y1="134" x2="770.0" y2="406" stroke="#eef0f2" stroke-width="1"/>
-<text x="770.0" y="424" font-size="11" fill="#6b7280" text-anchor="middle">6</text>
-<text x="485.0" y="446" font-size="11.5" fill="#6b7280" text-anchor="middle">instances resolved (of 6)</text>
-<text x="188" y="163.0" font-size="12" fill="#111827" text-anchor="end">Oracle (ceiling)</text>
-<rect x="200" y="146.0" width="495.7" height="19" rx="3" fill="#2563eb"/>
-<text x="701.7" y="159.5" font-size="11.5" fill="#111827">5</text>
-<line x1="200" y1="176" x2="770" y2="176" stroke="#f3f4f6" stroke-width="1"/>
-<text x="188" y="201.0" font-size="12" fill="#111827" text-anchor="end">Random (floor) r0</text>
-<rect x="200" y="184.0" width="2.0" height="19" rx="3" fill="#2563eb"/>
-<text x="208.0" y="197.5" font-size="11.5" fill="#111827">0</text>
-<line x1="200" y1="214" x2="770" y2="214" stroke="#f3f4f6" stroke-width="1"/>
-<text x="188" y="239.0" font-size="12" fill="#111827" text-anchor="end">Random (floor) r1</text>
-<rect x="200" y="222.0" width="2.0" height="19" rx="3" fill="#2563eb"/>
-<text x="208.0" y="235.5" font-size="11.5" fill="#111827">0</text>
-<line x1="200" y1="252" x2="770" y2="252" stroke="#f3f4f6" stroke-width="1"/>
-<text x="188" y="277.0" font-size="12" fill="#111827" text-anchor="end">Ours (before) r0</text>
-<rect x="200" y="260.0" width="2.0" height="19" rx="3" fill="#2563eb"/>
-<text x="208.0" y="273.5" font-size="11.5" fill="#111827">0</text>
-<line x1="200" y1="290" x2="770" y2="290" stroke="#f3f4f6" stroke-width="1"/>
-<text x="188" y="315.0" font-size="12" fill="#111827" text-anchor="end">Ours (before) r1</text>
-<rect x="200" y="298.0" width="99.1" height="19" rx="3" fill="#2563eb"/>
-<text x="305.1" y="311.5" font-size="11.5" fill="#111827">1</text>
-<line x1="200" y1="328" x2="770" y2="328" stroke="#f3f4f6" stroke-width="1"/>
-<text x="188" y="353.0" font-size="12" fill="#111827" text-anchor="end">Ours (after) r0</text>
-<rect x="200" y="336.0" width="2.0" height="19" rx="3" fill="#2563eb"/>
-<text x="208.0" y="349.5" font-size="11.5" fill="#111827">0</text>
-<line x1="200" y1="366" x2="770" y2="366" stroke="#f3f4f6" stroke-width="1"/>
-<text x="188" y="391.0" font-size="12" fill="#111827" text-anchor="end">Ours (after) r1</text>
-<rect x="200" y="374.0" width="198.3" height="19" rx="3" fill="#2563eb"/>
-<text x="404.3" y="387.5" font-size="11.5" fill="#111827">2</text>
-<line x1="200" y1="404" x2="770" y2="404" stroke="#f3f4f6" stroke-width="1"/>
+<text x="200" y="46" font-size="12" fill="#4b5563">Same 6 tasks, same budget, same model -- only how the context was chosen differs. Every 'Ours' stage is</text>
+<text x="200" y="62" font-size="12" fill="#4b5563">a real, verified bug fix (see benchmarks/README.md), shown in full rather than a single before/after</text>
+<text x="200" y="78" font-size="12" fill="#4b5563">pair. Repeats shown as separate bars -- a real model is stochastic, n=2 per stage is not enough to</text>
+<text x="200" y="94" font-size="12" fill="#4b5563">separate luck from signal, and the run-to-run noise visible here is itself part of the honest result.</text>
+<text x="200" y="110" font-size="12" fill="#4b5563">Higher = better.</text>
+<rect x="200" y="140" width="12" height="12" rx="2" fill="#2563eb"/>
+<text x="217" y="150" font-size="12" fill="#374151">resolved</text>
+<line x1="200.0" y1="152" x2="200.0" y2="576" stroke="#eef0f2" stroke-width="1"/>
+<text x="200.0" y="594" font-size="11" fill="#6b7280" text-anchor="middle">0</text>
+<line x1="314.0" y1="152" x2="314.0" y2="576" stroke="#eef0f2" stroke-width="1"/>
+<text x="314.0" y="594" font-size="11" fill="#6b7280" text-anchor="middle">1</text>
+<line x1="428.0" y1="152" x2="428.0" y2="576" stroke="#eef0f2" stroke-width="1"/>
+<text x="428.0" y="594" font-size="11" fill="#6b7280" text-anchor="middle">2</text>
+<line x1="542.0" y1="152" x2="542.0" y2="576" stroke="#eef0f2" stroke-width="1"/>
+<text x="542.0" y="594" font-size="11" fill="#6b7280" text-anchor="middle">3</text>
+<line x1="656.0" y1="152" x2="656.0" y2="576" stroke="#eef0f2" stroke-width="1"/>
+<text x="656.0" y="594" font-size="11" fill="#6b7280" text-anchor="middle">5</text>
+<line x1="770.0" y1="152" x2="770.0" y2="576" stroke="#eef0f2" stroke-width="1"/>
+<text x="770.0" y="594" font-size="11" fill="#6b7280" text-anchor="middle">6</text>
+<text x="485.0" y="616" font-size="11.5" fill="#6b7280" text-anchor="middle">instances resolved (of 6)</text>
+<text x="188" y="181.0" font-size="12" fill="#111827" text-anchor="end">Oracle (ceiling)</text>
+<rect x="200" y="164.0" width="495.7" height="19" rx="3" fill="#2563eb"/>
+<text x="701.7" y="177.5" font-size="11.5" fill="#111827">5</text>
+<line x1="200" y1="194" x2="770" y2="194" stroke="#f3f4f6" stroke-width="1"/>
+<text x="188" y="219.0" font-size="12" fill="#111827" text-anchor="end">Random (floor) r0</text>
+<rect x="200" y="202.0" width="2.0" height="19" rx="3" fill="#2563eb"/>
+<text x="208.0" y="215.5" font-size="11.5" fill="#111827">0</text>
+<line x1="200" y1="232" x2="770" y2="232" stroke="#f3f4f6" stroke-width="1"/>
+<text x="188" y="257.0" font-size="12" fill="#111827" text-anchor="end">Random (floor) r1</text>
+<rect x="200" y="240.0" width="2.0" height="19" rx="3" fill="#2563eb"/>
+<text x="208.0" y="253.5" font-size="11.5" fill="#111827">0</text>
+<line x1="200" y1="270" x2="770" y2="270" stroke="#f3f4f6" stroke-width="1"/>
+<text x="188" y="295.0" font-size="12" fill="#111827" text-anchor="end">Ours (before any fix) r0</text>
+<rect x="200" y="278.0" width="2.0" height="19" rx="3" fill="#2563eb"/>
+<text x="208.0" y="291.5" font-size="11.5" fill="#111827">0</text>
+<line x1="200" y1="308" x2="770" y2="308" stroke="#f3f4f6" stroke-width="1"/>
+<text x="188" y="333.0" font-size="12" fill="#111827" text-anchor="end">Ours (before any fix) r1</text>
+<rect x="200" y="316.0" width="99.1" height="19" rx="3" fill="#2563eb"/>
+<text x="305.1" y="329.5" font-size="11.5" fill="#111827">1</text>
+<line x1="200" y1="346" x2="770" y2="346" stroke="#f3f4f6" stroke-width="1"/>
+<text x="188" y="371.0" font-size="12" fill="#111827" text-anchor="end">Ours (+ top_k_full_text) r0</text>
+<rect x="200" y="354.0" width="2.0" height="19" rx="3" fill="#2563eb"/>
+<text x="208.0" y="367.5" font-size="11.5" fill="#111827">0</text>
+<line x1="200" y1="384" x2="770" y2="384" stroke="#f3f4f6" stroke-width="1"/>
+<text x="188" y="409.0" font-size="12" fill="#111827" text-anchor="end">Ours (+ top_k_full_text) r1</text>
+<rect x="200" y="392.0" width="198.3" height="19" rx="3" fill="#2563eb"/>
+<text x="404.3" y="405.5" font-size="11.5" fill="#111827">2</text>
+<line x1="200" y1="422" x2="770" y2="422" stroke="#f3f4f6" stroke-width="1"/>
+<text x="188" y="447.0" font-size="12" fill="#111827" text-anchor="end">Ours (+ item cap) r0</text>
+<rect x="200" y="430.0" width="99.1" height="19" rx="3" fill="#2563eb"/>
+<text x="305.1" y="443.5" font-size="11.5" fill="#111827">1</text>
+<line x1="200" y1="460" x2="770" y2="460" stroke="#f3f4f6" stroke-width="1"/>
+<text x="188" y="485.0" font-size="12" fill="#111827" text-anchor="end">Ours (+ item cap) r1</text>
+<rect x="200" y="468.0" width="2.0" height="19" rx="3" fill="#2563eb"/>
+<text x="208.0" y="481.5" font-size="11.5" fill="#111827">0</text>
+<line x1="200" y1="498" x2="770" y2="498" stroke="#f3f4f6" stroke-width="1"/>
+<text x="188" y="523.0" font-size="12" fill="#111827" text-anchor="end">Ours (+ graph rescue, k=7) r0</text>
+<rect x="200" y="506.0" width="2.0" height="19" rx="3" fill="#2563eb"/>
+<text x="208.0" y="519.5" font-size="11.5" fill="#111827">0</text>
+<line x1="200" y1="536" x2="770" y2="536" stroke="#f3f4f6" stroke-width="1"/>
+<text x="188" y="561.0" font-size="12" fill="#111827" text-anchor="end">Ours (+ graph rescue, k=7) r1</text>
+<rect x="200" y="544.0" width="2.0" height="19" rx="3" fill="#2563eb"/>
+<text x="208.0" y="557.5" font-size="11.5" fill="#111827">0</text>
+<line x1="200" y1="574" x2="770" y2="574" stroke="#f3f4f6" stroke-width="1"/>
 </svg>
