@@ -1,4 +1,8 @@
+<div align="center">
+
 # Minimum Context Compiler
+
+*Given a task and a hard context budget, choose the smallest, highest-utility representation of available information most likely to preserve task performance.*
 
 [![tests](https://github.com/xiaoxiaoshikui/context-compiler/actions/workflows/tests.yml/badge.svg)](https://github.com/xiaoxiaoshikui/context-compiler/actions/workflows/tests.yml)
 [![version](https://img.shields.io/badge/version-0.2.0-informational.svg)](CHANGELOG.md)
@@ -6,11 +10,20 @@
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![core dependencies](https://img.shields.io/badge/core%20dependencies-zero-brightgreen.svg)](#quick-start)
 
+Pure Python 3.10+ &middot; stdlib SQLite &middot; zero required dependencies &middot; optional `mcp` / `tiktoken` / `anthropic` extras
+
+</div>
+
+> [!IMPORTANT]
+> **Bottom line:** on a small real, Docker-verified SWE-bench Verified sample, resolution stops improving past roughly 8,000 tokens of context (real evidence a sufficient-context point exists) — but this compiler's own TF-IDF selection is still far from the oracle ceiling at that same budget (0-2 of 6 resolved vs. the oracle's 5 of 6), reported exactly as measured, not smoothed over.
+
 A runnable reference implementation of the **Minimum Sufficient Context** idea:
 
 > Given a task and a hard context budget, choose the smallest/highest-utility representation of available information that is most likely to preserve task performance.
 
 This repository is a research/runtime substrate for that idea. The core works with Python's standard library only. Raw context is stored losslessly in SQLite, while the model-facing representation can be lossy and progressively expandable.
+
+---
 
 ## Highlights
 
@@ -21,6 +34,8 @@ This repository is a research/runtime substrate for that idea. The core works wi
 - **CLI, an HTTP API with no dependencies, and an optional MCP v2 server** ship in the same package.
 - **A benchmark harness with reproducible before/after numbers** for every algorithmic change in this repo's history — including a real determinism bug the benchmarking work found and fixed. See [Benchmarks](#benchmarks).
 - **Validated against real SWE-bench Verified instances with real Docker-verified test execution** — not a keyword-matching proxy. The results are reported honestly, including where this compiler currently falls short of an oracle ceiling. See [Real-execution evaluation](#benchmarks).
+
+---
 
 ## 30-second demo
 
@@ -62,6 +77,8 @@ see [Quick start](#quick-start) for the full walkthrough (search, expand,
 pinning a constraint by hand), or [Architecture](#architecture) for how the
 budget allocator decides what to include.
 
+---
+
 ## Contents
 
 - [Highlights](#highlights)
@@ -80,6 +97,10 @@ budget allocator decides what to include.
 - [Current limitations](#current-limitations)
 - [Recommended next research iterations](#recommended-next-research-iterations)
 - [Contributing](#contributing)
+- [Citation](#citation)
+- [License](#license)
+
+---
 
 ## What is implemented
 
@@ -107,45 +128,22 @@ budget allocator decides what to include.
 - Optional tiktoken counter
 - Unit tests and a runnable demo repository
 
+---
+
 ## Architecture
 
-```text
-Files / docs / decisions / constraints / conversations
-                       |
-                       v
-               +----------------+
-               | Context Store  |  <-- raw information remains lossless
-               |    SQLite      |
-               +-------+--------+
-                       |
-             candidate retrieval
-                       |
-                       v
-               +----------------+
-Task --------> | Context Scorer |
-               +-------+--------+
-                       |
-        relevance / importance / risk /
-        recency / dependency / pinning
-                       |
-                       v
-               +----------------+
-               | Multi-resolution|
-               |    Renderer     |
-               +-------+--------+
-                       |
-            L0 L1 L2 L3 L4 variants
-                       |
-                       v
-               +----------------+
-Budget ------> |   Allocator    |
-               +-------+--------+
-                       |
-                       v
-              Compiled Working Set
-                       |
-                       v
-                      LLM
+```mermaid
+flowchart TD
+    Sources["Files / docs / decisions /<br/>constraints / conversations"] --> Store[("Context Store<br/>SQLite &mdash; lossless")]
+    Store --> Retrieval["Candidate Retrieval<br/>TF-IDF (default) / FTS5"]
+    Task(["Task"]) --> Scorer["Context Scorer"]
+    Retrieval --> Scorer
+    Graph["Dependency Graph<br/>(import edges)"] -. feeds .-> Scorer
+    Scorer -->|"relevance &middot; importance &middot; risk &middot;<br/>recency &middot; dependency &middot; pinning"| Renderer["Multi-resolution Renderer<br/>L0 pointer &rarr; L4 full text"]
+    Renderer --> Allocator["Allocator<br/>greedy marginal utility per token"]
+    Budget(["Budget"]) --> Allocator
+    Allocator --> Working["Compiled Working Set"]
+    Working --> LLM(["LLM"])
 ```
 
 The central optimization implemented here is approximately:
@@ -156,6 +154,8 @@ subject to sum_i tokens(level_i) <= budget
 ```
 
 with forced minimum fidelity for pinned/constraint items, followed by greedy marginal utility-per-token upgrades.
+
+---
 
 ## Quick start
 
@@ -205,6 +205,8 @@ ctxc add \
   --content "Never automatically replay a non-idempotent authorization exchange."
 ```
 
+---
+
 ## Exact-ish token counting
 
 The default counter is dependency-free and intended for budgeting experiments, not billing reconciliation. For OpenAI-family tokenization experiments:
@@ -215,6 +217,8 @@ ctxc --tokenizer tiktoken compile "..." --budget 8000
 ```
 
 The tokenizer is intentionally an adapter: replace it with a model-specific counter when measuring a specific model.
+
+---
 
 ## MCP server
 
@@ -254,6 +258,8 @@ The intended host behavior is:
 
 That is the progressive-disclosure / virtual-memory loop.
 
+---
+
 ## HTTP API
 
 No dependencies are needed:
@@ -283,6 +289,8 @@ curl -s http://127.0.0.1:8765/compile \
   -d '{"task":"Fix Safari OAuth login", "budget":700}'
 ```
 
+---
+
 ## Python API
 
 ```python
@@ -308,6 +316,8 @@ print(result.text)
 print(result.used_tokens)
 print(result.selections)
 ```
+
+---
 
 ## Experiments
 
@@ -385,6 +395,8 @@ and must print one JSON object:
 
 This is the recommended bridge for SWE-bench-style evaluation: your external harness owns repository checkout, agent execution and test evaluation; Context Compiler owns context selection and measurement.
 
+---
+
 ## Run the included demo
 
 ```bash
@@ -398,6 +410,8 @@ ctxc --db demo.db compile \
 python examples/run_experiment.py
 ```
 
+---
+
 ## Run tests
 
 No test dependency is required:
@@ -405,6 +419,8 @@ No test dependency is required:
 ```bash
 python -m unittest discover -s tests -v
 ```
+
+---
 
 ## Benchmarks
 
@@ -562,6 +578,8 @@ hit rate before the real-execution study above existed) that found and
 fixed two more real bugs — see "two bugs a real SWE-bench Verified
 instance found" there.
 
+---
+
 ## Current limitations
 
 This package intentionally makes the research hypothesis inspectable. It does **not** pretend that the current heuristic scorer solves context sufficiency.
@@ -601,7 +619,12 @@ Current limitations:
 
 These are intentional extension points rather than hidden assumptions.
 
+---
+
 ## Recommended next research iterations
+
+<details>
+<summary><strong>8 planned iterations (click to expand)</strong></summary>
 
 1. **Build a benchmark harness** around 30-100 coding tasks. *Started:*
    `benchmarks/` has a 15-task version across five task shapes, comparing
@@ -636,7 +659,11 @@ These are intentional extension points rather than hidden assumptions.
    limitation #3 above. Still import-level, not a true call/entity graph.
 8. Add online expansion/eviction based on agent actions.
 
+</details>
+
 See `DESIGN.md` for the algorithm and extension points.
+
+---
 
 ## Contributing
 
@@ -644,3 +671,22 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) for dev setup, the benchmark
 before/after convention this repo expects for algorithmic changes, and
 how to add a benchmark task. [`CHANGELOG.md`](CHANGELOG.md) has the
 release history.
+
+---
+
+## Citation
+
+```bibtex
+@misc{guo2026contextcompiler,
+  author = {Guo, Yunxiang},
+  title  = {Minimum Context Compiler: a task-aware context compiler under a hard token budget},
+  year   = {2026},
+  url    = {https://github.com/xiaoxiaoshikui/context-compiler}
+}
+```
+
+---
+
+## License
+
+MIT &mdash; see [LICENSE](LICENSE).
